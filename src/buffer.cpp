@@ -13,6 +13,7 @@
  
 namespace lve {
  
+
 /**
  * Returns the minimum instance size required to be compatible with devices minOffsetAlignment
  *

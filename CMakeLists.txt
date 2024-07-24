@@ -52,6 +52,7 @@ add_executable(hehcraft
     src/camera.cpp
     src/keyboard_controller.cpp
     src/game_object.cpp
+    src/buffer.cpp
 )
 
 # Link libraries
