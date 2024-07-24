@@ -24,6 +24,7 @@ set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
 
 # Include directories
 include_directories(${GLM_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/external/tiny_obj_loader)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Find packages
@@ -48,6 +49,8 @@ add_executable(hehcraft
     src/renderer.cpp
     src/simple_render_system.cpp
     src/app.cpp
+    src/camera.cpp
+    src/keyboard_controller.cpp
 )
 
 # Link libraries
