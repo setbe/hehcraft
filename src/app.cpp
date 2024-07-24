@@ -45,7 +45,7 @@ void FirstApp::run() {
     camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
     float aspect = lveRenderer.getAspectRatio();
-    camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 10.f);
+    camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.f);
 
     if (auto commandBuffer = lveRenderer.beginFrame()) {
       lveRenderer.beginSwapChainRenderPass(commandBuffer);
@@ -60,12 +60,33 @@ void FirstApp::run() {
 
 void FirstApp::loadGameObjects() {
   std::shared_ptr<LveModel> lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
-  LveGameObject gameObj = LveGameObject::createGameObject();
-  gameObj.model = lveModel;
-  gameObj.transform.translation = {0.f, 0.f, 2.5f};
-  gameObj.transform.scale = glm::vec3{3.f};
+  LveGameObject smooth = LveGameObject::createGameObject();
+  smooth.model = lveModel;
+  smooth.transform.translation = {0.5f, 0.f, 2.5f};
+  smooth.transform.scale = glm::vec3{3.f, 1.f, 3.f};
 
-  gameObjects.push_back(std::move(gameObj));
+  lveModel = LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
+  LveGameObject flat = LveGameObject::createGameObject();
+  flat.model = lveModel;
+  flat.transform.translation = {-0.5f, 0.f, 2.5f};
+  flat.transform.scale = glm::vec3{3.f, 1.f, 3.f};
+
+  lveModel = LveModel::createModelFromFile(lveDevice, "models/colored_cube.obj");
+  LveGameObject colored = LveGameObject::createGameObject();
+  colored.model = lveModel;
+  colored.transform.translation = {0.5f, 1.f, 2.5f};
+  colored.transform.scale = glm::vec3{.1f, .1f, .1f};
+
+  lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
+  LveGameObject cube = LveGameObject::createGameObject();
+  cube.model = lveModel;
+  cube.transform.translation = {-0.5f, -1.f, 2.5f};
+  cube.transform.scale = glm::vec3{.1f, .1f, .1f};
+
+  gameObjects.push_back(std::move(smooth));
+  gameObjects.push_back(std::move(flat));
+  gameObjects.push_back(std::move(colored));
+  gameObjects.push_back(std::move(cube));
 }
 
 }  // namespace lve
