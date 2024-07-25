@@ -70,3 +70,61 @@ endif()
 if (UNIX)
     target_link_libraries(hehcraft GL X11 Xxf86vm Xrandr Xi pthread dl)
 endif()
+
+
+
+# Find the glslangValidator executable
+find_program(GLSL_VALIDATOR glslangValidator HINTS
+  "$ENV{VULKAN_SDK}/Bin"
+  "/usr/bin"
+  "/usr/local/bin"
+)
+
+# Ensure the GLSL_VALIDATOR was found
+if (NOT GLSL_VALIDATOR)
+  message(FATAL_ERROR "glslangValidator not found. Please install or set VULKAN_SDK environment variable.")
+endif()
+
+# Get all .vert and .frag files in shaders directory
+file(GLOB_RECURSE GLSL_SOURCE_FILES
+  "${CMAKE_SOURCE_DIR}/shaders/*.frag"
+  "${CMAKE_SOURCE_DIR}/shaders/*.vert"
+)
+
+# Set the output directory for the SPIR-V files
+set(SPIRV_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
+
+# Ensure the SPIRV_OUTPUT_DIR exists
+file(MAKE_DIRECTORY ${SPIRV_OUTPUT_DIR})
+
+# Create a list to hold the SPIR-V files
+set(SPIRV_BINARY_FILES)
+
+# Compile each GLSL file to SPIR-V
+foreach(GLSL ${GLSL_SOURCE_FILES})
+  get_filename_component(FILE_NAME ${GLSL} NAME)
+  set(SPIRV "${SPIRV_OUTPUT_DIR}/${FILE_NAME}.spv")
+  add_custom_command(
+    OUTPUT ${SPIRV}
+    COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+    DEPENDS ${GLSL}
+    COMMENT "Compiling ${GLSL} to SPIR-V"
+  )
+  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach()
+
+# Create a custom target to compile the shaders
+add_custom_target(
+  Shaders
+  DEPENDS ${SPIRV_BINARY_FILES}
+)
+
+add_dependencies(hehcraft Shaders)
+
+add_custom_target(CopyModels ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/models
+    ${CMAKE_BINARY_DIR}/models
+)
+
+add_dependencies(hehcraft CopyModels)
