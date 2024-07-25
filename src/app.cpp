@@ -21,11 +21,20 @@
 namespace lve {
 
 struct GlobalUbo {
-  glm::mat4 viewProjMatrix;
-  glm::vec3 lightDirection = glm::normalize(glm::vec3(1.f, -3.f, -1.f));
+  glm::mat4 viewProjMatrix{1.f};
+  glm::vec4 ambientLightColor{1.f, 1.f, 1.f, 0.02f};
+  glm::vec3 lightPostion{-1.f};
+  alignas(16) glm::vec4 lightColor{1.f}; // w is light intensity
 };
 
-FirstApp::FirstApp() { loadGameObjects(); }
+FirstApp::FirstApp() { 
+  globalPull = LveDescriptorPool::Builder(lveDevice)
+    .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+    .build();
+
+  loadGameObjects(); 
+  }
 
 FirstApp::~FirstApp() {}
 
@@ -45,13 +54,27 @@ void FirstApp::run() {
     uboBuffers[i]->map();
   }
 
-  SimpleRenderSystem simpleRenderSystem{lveDevice, lveRenderer.getSwapChainRenderPass()};
+  auto globalSetLayout = LveDescriptorSetLayout::Builder(lveDevice)
+    .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+    .build();
+
+  std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
+  for(int i = 0; i < globalDescriptorSets.size(); i++)
+  {
+    auto bufferInfo = uboBuffers[i]->descriptorInfo();
+    LveDescriptorWriter(*globalSetLayout, *globalPull)
+      .writeBuffer(0, &bufferInfo)
+      .build(globalDescriptorSets[i]);
+  }
+
+  SimpleRenderSystem simpleRenderSystem{lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
   Camera camera{};
   //camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
 
   camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
 
   auto viewerObject = LveGameObject::createGameObject();
+  viewerObject.transform.translation.z = -3.f;
   KeyboardController cameraController{};
 
   auto currentTime = std::chrono::high_resolution_clock::now();
@@ -76,7 +99,9 @@ void FirstApp::run() {
         frameIndex, 
         frameTime, 
         commandBuffer, 
-        camera
+        camera,
+        globalDescriptorSets[frameIndex],
+        gameObjects
       };
 
       // update
@@ -87,7 +112,7 @@ void FirstApp::run() {
 
       // render
       lveRenderer.beginSwapChainRenderPass(commandBuffer);
-      simpleRenderSystem.renderGameObjects(frameInfo, gameObjects);
+      simpleRenderSystem.renderGameObjects(frameInfo);
       lveRenderer.endSwapChainRenderPass(commandBuffer);
       lveRenderer.endFrame();
     }
@@ -100,31 +125,37 @@ void FirstApp::loadGameObjects() {
   std::shared_ptr<LveModel> lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
   LveGameObject smooth = LveGameObject::createGameObject();
   smooth.model = lveModel;
-  smooth.transform.translation = {0.5f, 0.f, 2.5f};
-  smooth.transform.scale = glm::vec3{3.f, 1.f, 3.f};
+  smooth.transform.translation = {0.5f, 0.f, -2.5f};
+  smooth.transform.scale = glm::vec3{1.f, 1.f, 1.f};
+  gameObjects.emplace(smooth.getId(), std::move(smooth));
 
   lveModel = LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
   LveGameObject flat = LveGameObject::createGameObject();
   flat.model = lveModel;
-  flat.transform.translation = {-0.5f, 0.f, 2.5f};
-  flat.transform.scale = glm::vec3{3.f, 1.f, 3.f};
+  flat.transform.translation = {-0.5f, 0.f, -1.f};
+  flat.transform.scale = glm::vec3{1.f, 1.f, 1.f};
+  gameObjects.emplace(flat.getId(), std::move(flat));
 
   lveModel = LveModel::createModelFromFile(lveDevice, "models/colored_cube.obj");
   LveGameObject colored = LveGameObject::createGameObject();
   colored.model = lveModel;
-  colored.transform.translation = {0.5f, 1.f, 2.5f};
-  colored.transform.scale = glm::vec3{.1f, .1f, .1f};
+  colored.transform.translation = {1.5f, -0.2f, 2.5f};
+  colored.transform.scale = glm::vec3{.2f};
+  gameObjects.emplace(colored.getId(), std::move(colored));
 
   lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
   LveGameObject cube = LveGameObject::createGameObject();
   cube.model = lveModel;
-  cube.transform.translation = {-0.5f, -1.f, 2.5f};
-  cube.transform.scale = glm::vec3{.1f, .1f, .1f};
+  cube.transform.translation = {-1.5f, -0.2f, 0.f};
+  cube.transform.scale = glm::vec3{.2f};
+  gameObjects.emplace(cube.getId(), std::move(cube));
 
-  gameObjects.push_back(std::move(smooth));
-  gameObjects.push_back(std::move(flat));
-  gameObjects.push_back(std::move(colored));
-  gameObjects.push_back(std::move(cube));
+  lveModel = LveModel::createModelFromFile(lveDevice, "models/quad.obj");
+  LveGameObject floor = LveGameObject::createGameObject();
+  floor.model = lveModel;
+  floor.transform.translation = {0.f, 0.f, 0.f};
+  floor.transform.scale = glm::vec3{3.f, 1.f, 3.f};
+  gameObjects.emplace(floor.getId(), std::move(floor));
 }
 
 }  // namespace lve
