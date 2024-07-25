@@ -3,18 +3,18 @@
 #include "camera.hpp"
 #include "game_object.hpp"
 
-// libs
+// Standard library headers
 #include <vulkan/vulkan.h>
 
-namespace lve {
+namespace heh {
 
 struct FrameInfo {
-  int frameIndex;
-  float frameTime;
-  VkCommandBuffer commandBuffer;
+  int frame_index;
+  float frame_time;
+  VkCommandBuffer command_buffer;
   Camera &camera;
-  VkDescriptorSet globalDescriptorSet;
-  LveGameObject::Map &gameObjects;
+  VkDescriptorSet global_descriptor_set;
+  GameObject::Map &game_objects;
 };
 
-}; // namespace lve
+}  // namespace heh

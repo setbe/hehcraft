@@ -10,24 +10,26 @@
 #include <memory>
 #include <vector>
 
-namespace lve {
+namespace heh {
+
 class SimpleRenderSystem {
  public:
-  SimpleRenderSystem(LveDevice &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout);
+  SimpleRenderSystem(Device& device, VkRenderPass render_pass, VkDescriptorSetLayout global_set_layout);
   ~SimpleRenderSystem();
 
-  SimpleRenderSystem(const SimpleRenderSystem &) = delete;
-  SimpleRenderSystem &operator=(const SimpleRenderSystem &) = delete;
+  SimpleRenderSystem(const SimpleRenderSystem&) = delete;
+  SimpleRenderSystem& operator=(const SimpleRenderSystem&) = delete;
 
-  void renderGameObjects(FrameInfo &frameInfo);
+  void RenderGameObjects(FrameInfo& frame_info);
 
  private:
-  void createPipelineLayout(VkDescriptorSetLayout globalSetLayout);
-  void createPipeline(VkRenderPass renderPass);
+  void CreatePipelineLayout(VkDescriptorSetLayout global_set_layout);
+  void CreatePipeline(VkRenderPass render_pass);
 
-  LveDevice &lveDevice;
+  Device& device_;
 
-  std::unique_ptr<LvePipeline> lvePipeline;
-  VkPipelineLayout pipelineLayout;
+  std::unique_ptr<Pipeline> pipeline_;
+  VkPipelineLayout pipeline_layout_;
 };
-}  // namespace lve
+
+}  // namespace heh

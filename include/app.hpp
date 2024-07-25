@@ -10,28 +10,28 @@
 #include <memory>
 #include <vector>
 
-namespace lve {
-class FirstApp {
+namespace heh {
+class App {
  public:
   static constexpr int WIDTH = 800;
   static constexpr int HEIGHT = 600;
 
-  FirstApp();
-  ~FirstApp();
+  App();
+  ~App();
 
-  FirstApp(const FirstApp &) = delete;
-  FirstApp &operator=(const FirstApp &) = delete;
+  App(const App &) = delete;
+  App &operator=(const App &) = delete;
 
-  void run();
+  void Run();
 
  private:
-  void loadGameObjects();
+  void LoadGameObjects();
 
-  LveWindow lveWindow{WIDTH, HEIGHT, "Vulkan Tutorial"};
-  LveDevice lveDevice{lveWindow};
-  LveRenderer lveRenderer{lveWindow, lveDevice};
+  Window window_{WIDTH, HEIGHT, "Vulkan Tutorial"};
+  Device device_{window_};
+  Renderer renderer_{window_, device_};
 
-  std::unique_ptr<LveDescriptorPool> globalPull{};
-  LveGameObject::Map gameObjects;
+  std::unique_ptr<DescriptorPool> global_pool_{};
+  GameObject::Map game_objects_;
 };
-}  // namespace lve
+}  // namespace heh

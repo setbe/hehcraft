@@ -12,8 +12,9 @@
 #include <memory>
 #include <vector>
 
-namespace lve {
-class LveModel {
+namespace heh {
+
+class Model {
  public:
   struct Vertex {
     glm::vec3 position{};
@@ -21,11 +22,14 @@ class LveModel {
     glm::vec3 normal{};
     glm::vec2 uv{};
 
-    static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
-    static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
-  
-    bool operator==(const Vertex& other) const {
-      return position == other.position && color == other.color && normal == other.normal && uv == other.uv;
+    static std::vector<VkVertexInputBindingDescription> GetBindingDescriptions();
+    static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+
+    bool operator==(const Vertex &other) const {
+      return position == other.position &&
+             color == other.color &&
+             normal == other.normal &&
+             uv == other.uv;
     }
   };
 
@@ -33,31 +37,32 @@ class LveModel {
     std::vector<Vertex> vertices{};
     std::vector<uint32_t> indices{};
 
-    void loadModel(const std::string &filename);
+    void LoadModel(const std::string &filename);
   };
 
-  LveModel(LveDevice &device, const Builder &builder);
-  ~LveModel();
+  Model(Device &device, const Builder &builder);
+  ~Model();
 
-  LveModel(const LveModel &) = delete;
-  LveModel &operator=(const LveModel &) = delete;
+  Model(const Model &) = delete;
+  Model &operator=(const Model &) = delete;
 
-  static std::unique_ptr<LveModel> createModelFromFile(LveDevice &device, const std::string &filename);
+  static std::unique_ptr<Model> CreateModelFromFile(Device &device, const std::string &filename);
 
-  void bind(VkCommandBuffer commandBuffer);
-  void draw(VkCommandBuffer commandBuffer);
+  void Bind(VkCommandBuffer command_buffer);
+  void Draw(VkCommandBuffer command_buffer);
 
  private:
-  void createVertexBuffers(const std::vector<Vertex> &vertices);
-  void createIndexBuffers(const std::vector<uint32_t> &indices);
+  void CreateVertexBuffers(const std::vector<Vertex> &vertices);
+  void CreateIndexBuffers(const std::vector<uint32_t> &indices);
 
-  LveDevice &lveDevice;
+  Device &device_;
 
-  std::unique_ptr<LveBuffer> vertexBuffer;
-  uint32_t vertexCount;
+  std::unique_ptr<Buffer> vertex_buffer_;
+  uint32_t vertex_count_{};
 
-  bool hasIndexBuffer = false;
-  std::unique_ptr<LveBuffer> indexBuffer;
-  uint32_t indexCount;
+  bool has_index_buffer_ = false;
+  std::unique_ptr<Buffer> index_buffer_;
+  uint32_t index_count_{};
 };
-}  // namespace lve
+
+}  // namespace heh

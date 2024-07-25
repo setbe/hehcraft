@@ -2,50 +2,50 @@
 
 #include "model.hpp"
 
+// Standard library headers
 #include <glm/gtc/matrix_transform.hpp>
-
-// std
 #include <memory>
 #include <unordered_map>
 
-namespace lve {
+namespace heh {
 
 struct TransformComponent {
-  glm::vec3 translation{};  // (position offset)
-  glm::vec3 scale{1.f, 1.f, 1.f};
-  glm::vec3 rotation{}; // Tait-Bryan angles (YXZ order)
+  glm::vec3 translation{};  // Position offset
+  glm::vec3 scale{1.f, 1.f, 1.f};  // Scale factors
+  glm::vec3 rotation{};  // Tait-Bryan angles (YXZ order)
 
-  // Matrix corrsponds to Translate * Ry * Rx * Rz * Scale
-  // Rotations correspond to Tait-bryan angles of Y(1), X(2), Z(3)
+  // Matrix corresponds to Translate * Ry * Rx * Rz * Scale
+  // Rotations correspond to Tait-Bryan angles of Y (1), X (2), Z (3)
   // https://en.wikipedia.org/wiki/Euler_angles#Rotation_matrix
-  glm::mat4 mat4();
-  glm::mat3 normalMatrix();
+  glm::mat4 Mat4();
+  glm::mat3 NormalMatrix();
 };
 
-class LveGameObject {
+class GameObject {
  public:
-  using id_t = unsigned int;
-  using Map = std::unordered_map<id_t, LveGameObject>;
+  using IdType = unsigned int;
+  using Map = std::unordered_map<IdType, GameObject>;
 
-  static LveGameObject createGameObject() {
-    static id_t currentId = 0;
-    return LveGameObject{currentId++};
+  static GameObject Create() {
+    static IdType current_id = 0;
+    return GameObject{current_id++};
   }
 
-  LveGameObject(const LveGameObject &) = delete;
-  LveGameObject &operator=(const LveGameObject &) = delete;
-  LveGameObject(LveGameObject &&) = default;
-  LveGameObject &operator=(LveGameObject &&) = default;
+  GameObject(const GameObject &) = delete;
+  GameObject &operator=(const GameObject &) = delete;
+  GameObject(GameObject &&) = default;
+  GameObject &operator=(GameObject &&) = default;
 
-  id_t getId() { return id; }
+  IdType GetId() const { return id_; }
 
-  std::shared_ptr<LveModel> model{};
+  std::shared_ptr<Model> model{};
   glm::vec3 color{};
   TransformComponent transform{};
 
  private:
-  LveGameObject(id_t objId) : id{objId} {}
+  explicit GameObject(IdType obj_id) : id_{obj_id} {}
 
-  id_t id;
+  IdType id_;
 };
-}  // namespace lve
+
+}  // namespace heh

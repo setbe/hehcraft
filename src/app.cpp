@@ -18,144 +18,145 @@
 #include <chrono>
 #include <numeric>
 
-namespace lve {
+namespace heh {
 
-struct GlobalUbo {
-  glm::mat4 viewProjMatrix{1.f};
-  glm::vec4 ambientLightColor{1.f, 1.f, 1.f, 0.02f};
-  glm::vec3 lightPostion{-1.f};
-  alignas(16) glm::vec4 lightColor{1.f}; // w is light intensity
+struct GlobalUbo 
+{
+  glm::mat4 view_proj_matrix{1.f};
+  glm::vec4 ambient_light_color{1.f, 1.f, 1.f, 0.02f};
+  glm::vec3 light_position{-1.f};
+  alignas(16) glm::vec4 light_color{1.f}; // w is light intensity
 };
 
-FirstApp::FirstApp() { 
-  globalPull = LveDescriptorPool::Builder(lveDevice)
-    .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT)
-    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
-    .build();
+App::App() 
+{
+  global_pool_ = DescriptorPool::Builder(device_)
+    .SetMaxSets(SwapChain::kMaxFramesInFlight)
+    .AddPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::kMaxFramesInFlight)
+    .Build();
 
-  loadGameObjects(); 
-  }
+  LoadGameObjects();
+}
 
-FirstApp::~FirstApp() {}
+App::~App() {}
 
-void FirstApp::run() {
+void App::Run() 
+{
+  std::vector<std::unique_ptr<Buffer>> ubo_buffers(SwapChain::kMaxFramesInFlight);
 
-  std::vector<std::unique_ptr<LveBuffer>> uboBuffers{LveSwapChain::MAX_FRAMES_IN_FLIGHT};
-
-  for (int i = 0; i < uboBuffers.size(); i++)
-  {
-    uboBuffers[i] = std::make_unique<LveBuffer>(
-      lveDevice, 
-      sizeof(GlobalUbo), 
-      1, 
-      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+  // Initialize UBO buffers
+  for (int i = 0; i < ubo_buffers.size(); ++i) {
+    ubo_buffers[i] = std::make_unique<Buffer>(
+      device_,
+      sizeof(GlobalUbo),
+      1,
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
     );
-    uboBuffers[i]->map();
+    ubo_buffers[i]->Map();
   }
 
-  auto globalSetLayout = LveDescriptorSetLayout::Builder(lveDevice)
-    .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
-    .build();
+  auto global_set_layout = DescriptorSetLayout::Builder(device_)
+    .AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS)
+    .Build();
 
-  std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
-  for(int i = 0; i < globalDescriptorSets.size(); i++)
-  {
-    auto bufferInfo = uboBuffers[i]->descriptorInfo();
-    LveDescriptorWriter(*globalSetLayout, *globalPull)
-      .writeBuffer(0, &bufferInfo)
-      .build(globalDescriptorSets[i]);
+  // Initialize descriptor sets
+  std::vector<VkDescriptorSet> global_descriptor_sets(SwapChain::kMaxFramesInFlight);
+  for (int i = 0; i < global_descriptor_sets.size(); ++i) {
+    auto buffer_info = ubo_buffers[i]->DescriptorInfo();
+    DescriptorWriter(*global_set_layout, *global_pool_)
+      .WriteBuffer(0, &buffer_info)
+      .Build(global_descriptor_sets[i]);
   }
 
-  SimpleRenderSystem simpleRenderSystem{lveDevice, lveRenderer.getSwapChainRenderPass(), globalSetLayout->getDescriptorSetLayout()};
-  Camera camera{};
-  //camera.setViewDirection(glm::vec3(0.f), glm::vec3(0.5f, 0.f, 1.f));
+  SimpleRenderSystem simple_render_system{device_, renderer_.GetSwapChainRenderPass(), global_set_layout->GetDescriptorSetLayout()};
+  Camera camera;
+  camera.SetViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
 
-  camera.setViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
+  auto viewer_object = GameObject::Create();
+  viewer_object.transform.translation.z = -3.f;
+  KeyboardController camera_controller;
 
-  auto viewerObject = LveGameObject::createGameObject();
-  viewerObject.transform.translation.z = -3.f;
-  KeyboardController cameraController{};
+  auto current_time = std::chrono::high_resolution_clock::now();
 
-  auto currentTime = std::chrono::high_resolution_clock::now();
-
-  while (!lveWindow.shouldClose()) {
+  while (!window_.ShouldClose()) {
     glfwPollEvents();
 
-    auto newTime = std::chrono::high_resolution_clock::now();
-    float frameTime = std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
-    currentTime = newTime;
+    auto new_time = std::chrono::high_resolution_clock::now();
+    float frame_time = std::chrono::duration<float>(new_time - current_time).count();
+    current_time = new_time;
 
-    cameraController.moveInPlaneXZ(lveWindow.getGLFWwindow(), viewerObject, frameTime);
-    camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
+    camera_controller.MoveInPlaneXZ(window_.GetGLFWwindow(), viewer_object, frame_time);
+    camera.SetViewYXZ(viewer_object.transform.translation, viewer_object.transform.rotation);
 
-    float aspect = lveRenderer.getAspectRatio();
-    camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.f);
+    float aspect = renderer_.GetAspectRatio();
+    camera.SetPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 500.f);
 
-    if (auto commandBuffer = lveRenderer.beginFrame()) {
-      int frameIndex = lveRenderer.getFrameIndex();
+    if (auto command_buffer = renderer_.BeginFrame()) {
+      int frame_index = renderer_.GetFrameIndex();
 
-      FrameInfo frameInfo{
-        frameIndex, 
-        frameTime, 
-        commandBuffer, 
+      FrameInfo frame_info{
+        frame_index,
+        frame_time,
+        command_buffer,
         camera,
-        globalDescriptorSets[frameIndex],
-        gameObjects
+        global_descriptor_sets[frame_index],
+        game_objects_
       };
 
-      // update
+      // Update UBO
       GlobalUbo ubo{};
-      ubo.viewProjMatrix = camera.getProjection() * camera.getView();
-      uboBuffers[frameIndex]->writeToBuffer(&ubo);
-      uboBuffers[frameIndex]->flush();
+      ubo.view_proj_matrix = camera.GetProjection() * camera.GetView();
+      ubo_buffers[frame_index]->WriteToBuffer(&ubo);
+      ubo_buffers[frame_index]->Flush();
 
-      // render
-      lveRenderer.beginSwapChainRenderPass(commandBuffer);
-      simpleRenderSystem.renderGameObjects(frameInfo);
-      lveRenderer.endSwapChainRenderPass(commandBuffer);
-      lveRenderer.endFrame();
+      // Render
+      renderer_.BeginSwapChainRenderPass(command_buffer);
+      simple_render_system.RenderGameObjects(frame_info);
+      renderer_.EndSwapChainRenderPass(command_buffer);
+      renderer_.EndFrame();
     }
   }
 
-  vkDeviceWaitIdle(lveDevice.device());
+  vkDeviceWaitIdle(device_.GetDevice());
 }
 
-void FirstApp::loadGameObjects() {
-  std::shared_ptr<LveModel> lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
-  LveGameObject smooth = LveGameObject::createGameObject();
-  smooth.model = lveModel;
+void App::LoadGameObjects() 
+{
+  std::shared_ptr<Model> model = Model::CreateModelFromFile(device_, "models/smooth_vase.obj");
+  GameObject smooth = GameObject::Create();
+  smooth.model = model;
   smooth.transform.translation = {0.5f, 0.f, -2.5f};
   smooth.transform.scale = glm::vec3{1.f, 1.f, 1.f};
-  gameObjects.emplace(smooth.getId(), std::move(smooth));
+  game_objects_.emplace(smooth.GetId(), std::move(smooth));
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
-  LveGameObject flat = LveGameObject::createGameObject();
-  flat.model = lveModel;
+  model = Model::CreateModelFromFile(device_, "models/flat_vase.obj");
+  GameObject flat = GameObject::Create();
+  flat.model = model;
   flat.transform.translation = {-0.5f, 0.f, -1.f};
   flat.transform.scale = glm::vec3{1.f, 1.f, 1.f};
-  gameObjects.emplace(flat.getId(), std::move(flat));
+  game_objects_.emplace(flat.GetId(), std::move(flat));
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/colored_cube.obj");
-  LveGameObject colored = LveGameObject::createGameObject();
-  colored.model = lveModel;
+  model = Model::CreateModelFromFile(device_, "models/colored_cube.obj");
+  GameObject colored = GameObject::Create();
+  colored.model = model;
   colored.transform.translation = {1.5f, -0.2f, 2.5f};
   colored.transform.scale = glm::vec3{.2f};
-  gameObjects.emplace(colored.getId(), std::move(colored));
+  game_objects_.emplace(colored.GetId(), std::move(colored));
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/cube.obj");
-  LveGameObject cube = LveGameObject::createGameObject();
-  cube.model = lveModel;
+  model = Model::CreateModelFromFile(device_, "models/cube.obj");
+  GameObject cube = GameObject::Create();
+  cube.model = model;
   cube.transform.translation = {-1.5f, -0.2f, 0.f};
   cube.transform.scale = glm::vec3{.2f};
-  gameObjects.emplace(cube.getId(), std::move(cube));
+  game_objects_.emplace(cube.GetId(), std::move(cube));
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/quad.obj");
-  LveGameObject floor = LveGameObject::createGameObject();
-  floor.model = lveModel;
+  model = Model::CreateModelFromFile(device_, "models/quad.obj");
+  GameObject floor = GameObject::Create();
+  floor.model = model;
   floor.transform.translation = {0.f, 0.f, 0.f};
   floor.transform.scale = glm::vec3{3.f, 1.f, 3.f};
-  gameObjects.emplace(floor.getId(), std::move(floor));
+  game_objects_.emplace(floor.GetId(), std::move(floor));
 }
 
-}  // namespace lve
+}  // namespace heh
