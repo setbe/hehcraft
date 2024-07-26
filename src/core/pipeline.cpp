@@ -209,4 +209,19 @@ void Pipeline::DefaultPipelineConfigInfo(PipelineConfigInfo& config_info)
   config_info.attribute_descriptions = Model::Vertex::GetAttributeDescriptions();
 }
 
+void Pipeline::EnableAlphaBlending(PipelineConfigInfo& config_info)
+{
+  config_info.color_blend_attachment.blendEnable = VK_TRUE;
+
+  config_info.color_blend_attachment.colorWriteMask =
+      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT |
+      VK_COLOR_COMPONENT_A_BIT;
+  config_info.color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+  config_info.color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+  config_info.color_blend_attachment.colorBlendOp = VK_BLEND_OP_ADD;
+  config_info.color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+  config_info.color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+  config_info.color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
 }  // namespace heh

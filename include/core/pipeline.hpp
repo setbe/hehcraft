@@ -9,6 +9,7 @@
 namespace heh {
 
 struct PipelineConfigInfo {
+  PipelineConfigInfo() = default;
   PipelineConfigInfo(const PipelineConfigInfo&) = delete;
   PipelineConfigInfo& operator=(const PipelineConfigInfo&) = delete;
 
@@ -43,6 +44,7 @@ class Pipeline {
   void Bind(VkCommandBuffer command_buffer);
 
   static void DefaultPipelineConfigInfo(PipelineConfigInfo& config_info);
+  static void EnableAlphaBlending(PipelineConfigInfo& config_info);
 
  private:
   static std::vector<char> ReadFile(const std::string& filepath);
@@ -58,6 +60,6 @@ class Pipeline {
   VkPipeline graphics_pipeline_;
   VkShaderModule vert_shader_module_;
   VkShaderModule frag_shader_module_;
-};
+};  // class Pipeline
 
 }  // namespace heh

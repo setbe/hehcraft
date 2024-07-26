@@ -111,14 +111,19 @@ void App::Run()
       GlobalUbo ubo{};
       ubo.projetion = camera.GetProjection();
       ubo.view = camera.GetView();
+      ubo.inverse_view = camera.GetInverseView();
+
       point_light_system.Update(frame_info, ubo);
       ubo_buffers[frame_index]->WriteToBuffer(&ubo);
       ubo_buffers[frame_index]->Flush();
 
       // Render
       renderer_.BeginSwapChainRenderPass(command_buffer);
+
+      // Render game objects
       simple_render_system.RenderGameObjects(frame_info);
       point_light_system.Render(frame_info);
+      
       renderer_.EndSwapChainRenderPass(command_buffer);
       renderer_.EndFrame();
     }

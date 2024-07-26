@@ -10,6 +10,7 @@
 #include <array>
 #include <cassert>
 #include <stdexcept>
+#include <map>
 
 namespace heh {
   
@@ -60,6 +61,7 @@ void PointLightSystem::CreatePipeline(VkRenderPass render_pass)
 
   PipelineConfigInfo pipeline_config{};
   Pipeline::DefaultPipelineConfigInfo(pipeline_config);
+  Pipeline::EnableAlphaBlending(pipeline_config);
 
   pipeline_config.attribute_descriptions.clear();
   pipeline_config.binding_descriptions.clear();
@@ -105,6 +107,20 @@ void PointLightSystem::Update(FrameInfo &frame_info, GlobalUbo &ubo)
 
 void PointLightSystem::Render(FrameInfo &frame_info) 
 {
+  // sort lights by distance to camera
+  std::map<float, GameObject::IdType> sorted;
+
+  for (auto& kv : frame_info.game_objects) {
+    GameObject& obj = kv.second;
+    if (obj.point_light == nullptr)
+      continue;
+
+    // calculate distance
+    auto offset = frame_info.camera.GetPosition() - obj.transform.translation;
+    float dis_squared = glm::dot(offset, offset);
+    sorted[dis_squared] = obj.GetId();
+  }
+
   pipeline_->Bind(frame_info.command_buffer);
 
   vkCmdBindDescriptorSets(
@@ -117,10 +133,9 @@ void PointLightSystem::Render(FrameInfo &frame_info)
       0,
       nullptr);
 
-  for (auto& kv : frame_info.game_objects) {
-    GameObject& obj = kv.second;
-    if (obj.point_light == nullptr)
-      continue;
+  // iterate over sorted lights in reverse order
+  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    GameObject& obj = frame_info.game_objects.at(it->second);
 
     PointLightPushConstant push{};
     push.position = glm::vec4(obj.transform.translation, 1.0f);
