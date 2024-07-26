@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model.hpp"
+#include "core/model.hpp"
 
 // Standard library headers
 #include <glm/gtc/matrix_transform.hpp>
@@ -21,6 +21,10 @@ struct TransformComponent {
   glm::mat3 NormalMatrix();
 };
 
+struct PointLightComponent {
+  float light_intensity = 1.f;
+};
+
 class GameObject {
  public:
   using IdType = unsigned int;
@@ -31,6 +35,11 @@ class GameObject {
     return GameObject{current_id++};
   }
 
+  static GameObject MakePointLight(
+    float intensity = 10.f,
+    float radius = 0.1f,
+    glm::vec3 color = glm::vec3{1.f});
+
   GameObject(const GameObject &) = delete;
   GameObject &operator=(const GameObject &) = delete;
   GameObject(GameObject &&) = default;
@@ -38,9 +47,12 @@ class GameObject {
 
   IdType GetId() const { return id_; }
 
-  std::shared_ptr<Model> model{};
   glm::vec3 color{};
   TransformComponent transform{};
+
+  // optional pointers to components
+  std::shared_ptr<Model> model{};
+  std::unique_ptr<PointLightComponent> point_light = nullptr;
 
  private:
   explicit GameObject(IdType obj_id) : id_{obj_id} {}

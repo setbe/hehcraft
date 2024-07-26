@@ -1,9 +1,11 @@
-#include "app.hpp"
+#include "core/app.hpp"
 
-#include "camera.hpp"
-#include "simple_render_system.hpp"
-#include "keyboard_controller.hpp"
-#include "buffer.hpp"
+#include "core/camera.hpp"
+#include "core/keyboard_controller.hpp"
+#include "core/buffer.hpp"
+
+#include "core/systems/simple_render.hpp"
+#include "core/systems/point_light.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -19,14 +21,6 @@
 #include <numeric>
 
 namespace heh {
-
-struct GlobalUbo 
-{
-  glm::mat4 view_proj_matrix{1.f};
-  glm::vec4 ambient_light_color{1.f, 1.f, 1.f, 0.02f};
-  glm::vec3 light_position{-1.f};
-  alignas(16) glm::vec4 light_color{1.f}; // w is light intensity
-};
 
 App::App() 
 {
@@ -69,7 +63,16 @@ void App::Run()
       .Build(global_descriptor_sets[i]);
   }
 
-  SimpleRenderSystem simple_render_system{device_, renderer_.GetSwapChainRenderPass(), global_set_layout->GetDescriptorSetLayout()};
+  SimpleRenderSystem simple_render_system{
+    device_, 
+    renderer_.GetSwapChainRenderPass(), 
+    global_set_layout->GetDescriptorSetLayout()};
+
+  PointLightSystem point_light_system{
+    device_, 
+    renderer_.GetSwapChainRenderPass(), 
+    global_set_layout->GetDescriptorSetLayout()};
+  
   Camera camera;
   camera.SetViewTarget(glm::vec3(-1.f, -2.f, 2.f), glm::vec3(0.f, 0.f, 2.5f));
 
@@ -106,13 +109,16 @@ void App::Run()
 
       // Update UBO
       GlobalUbo ubo{};
-      ubo.view_proj_matrix = camera.GetProjection() * camera.GetView();
+      ubo.projetion = camera.GetProjection();
+      ubo.view = camera.GetView();
+      point_light_system.Update(frame_info, ubo);
       ubo_buffers[frame_index]->WriteToBuffer(&ubo);
       ubo_buffers[frame_index]->Flush();
 
       // Render
       renderer_.BeginSwapChainRenderPass(command_buffer);
       simple_render_system.RenderGameObjects(frame_info);
+      point_light_system.Render(frame_info);
       renderer_.EndSwapChainRenderPass(command_buffer);
       renderer_.EndFrame();
     }
@@ -157,6 +163,28 @@ void App::LoadGameObjects()
   floor.transform.translation = {0.f, 0.f, 0.f};
   floor.transform.scale = glm::vec3{3.f, 1.f, 3.f};
   game_objects_.emplace(floor.GetId(), std::move(floor));
+
+  std::vector<glm::vec3> lightColors{
+    {1.f, .1f, .1f},
+    {.1f, .1f, 1.f},
+    {.1f, 1.f, .1f},
+    {1.f, 1.f, .1f},
+    {.1f, 1.f, 1.f},
+    {1.f, 1.f, 1.f}  //
+  };
+
+  for (int i = 0; i < lightColors.size(); i++) {
+    GameObject light = GameObject::MakePointLight(.4f);
+    light.color = lightColors[i];
+    auto rotate_light = glm::rotate(
+      glm::mat4(1.f), 
+      (i * glm::two_pi<float>()) / lightColors.size(), 
+      glm::vec3(0.f, -1.f, 0.f));
+
+    light.transform.translation = glm::vec3(rotate_light * glm::vec4(-1.f, -1.f, -1.f, 1.f));
+    game_objects_.emplace(light.GetId(), std::move(light));
+  }
+
 }
 
 }  // namespace heh

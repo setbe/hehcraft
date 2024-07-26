@@ -1,4 +1,4 @@
-#include "device.hpp"
+#include "core/device.hpp"
 
 // std headers
 #include <cstring>
@@ -232,7 +232,10 @@ void Device::PopulateDebugMessengerCreateInfo(
 
 void Device::SetupDebugMessenger() 
 {
-  if (!kEnableValidationLayers) return;
+  if (!kEnableValidationLayers) {
+    std::cout << "Validation layers not enabled, skipping debug messenger setup" << std::endl;
+    return;
+  }
   VkDebugUtilsMessengerCreateInfoEXT create_info;
   PopulateDebugMessengerCreateInfo(create_info);
   if (CreateDebugUtilsMessengerEXT(instance_, &create_info, nullptr, &debug_messenger_) != VK_SUCCESS)

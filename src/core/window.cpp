@@ -1,4 +1,4 @@
-#include "window.hpp"
+#include "core/window.hpp"
 
 // Standard libraries
 #include <stdexcept>

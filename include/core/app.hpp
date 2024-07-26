@@ -1,10 +1,10 @@
 #pragma once
 
-#include "device.hpp"
-#include "game_object.hpp"
-#include "renderer.hpp"
-#include "window.hpp"
-#include "descriptors.hpp"
+#include "core/device.hpp"
+#include "core/game_object.hpp"
+#include "core/renderer.hpp"
+#include "core/window.hpp"
+#include "core/descriptors.hpp"
 
 // std
 #include <memory>

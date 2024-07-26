@@ -15,8 +15,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Os -s")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -Os -s")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
+set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
+
+# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Oz -s")
+# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Oz -s")
+
+# add_definitions(-DNDEBUG)
 
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
@@ -33,42 +38,55 @@ find_package(Vulkan REQUIRED)
 
 # Manually specify the paths to GLFW if not found by find_package
 if (NOT TARGET glfw)
-    # add_subdirectory(${GLFW_DIR})
-    include_directories(${GLFW_DIR}/include)
-    link_directories(${GLFW_DIR}/lib)
+  # add_subdirectory(${GLFW_DIR})
+  include_directories(${GLFW_DIR}/include)
+  link_directories(${GLFW_DIR}/lib)
 endif()
 
-# Add executable
+set(CORE_SOURCES
+  src/core/window.cpp
+  src/core/pipeline.cpp
+  src/core/device.cpp
+  src/core/swap_chain.cpp
+  src/core/model.cpp
+  src/core/renderer.cpp
+  src/core/app.cpp
+  src/core/camera.cpp
+  src/core/keyboard_controller.cpp
+  src/core/game_object.cpp
+  src/core/buffer.cpp
+  src/core/descriptors.cpp
+)
+
+set(CORE_SYSTEMS_SOURCES
+  src/core/systems/simple_render.cpp
+  src/core/systems/point_light.cpp
+)
+
+set(SOURCE_FILES
+  src/main.cpp
+)
+
+# Додайте виконуваний файл проекту
 add_executable(hehcraft
-    src/main.cpp
-    src/window.cpp
-    src/pipeline.cpp
-    src/device.cpp
-    src/swap_chain.cpp
-    src/model.cpp
-    src/renderer.cpp
-    src/simple_render_system.cpp
-    src/app.cpp
-    src/camera.cpp
-    src/keyboard_controller.cpp
-    src/game_object.cpp
-    src/buffer.cpp
-    src/descriptors.cpp
+  ${SOURCE_FILES}
+  ${CORE_SOURCES}
+  ${CORE_SYSTEMS_SOURCES}
 )
 
 # Link libraries
 target_link_libraries(hehcraft
-    glfw
-    ${OPENGL_LIBRARIES}
-    Vulkan::Vulkan
+  glfw
+  ${OPENGL_LIBRARIES}
+  Vulkan::Vulkan
 )
 
 if (WIN32)
-    target_link_libraries(hehcraft opengl32)
+  target_link_libraries(hehcraft opengl32)
 endif()
 
 if (UNIX)
-    target_link_libraries(hehcraft GL X11 Xxf86vm Xrandr Xi pthread dl)
+  target_link_libraries(hehcraft GL X11 Xxf86vm Xrandr Xi pthread dl)
 endif()
 
 
@@ -122,9 +140,9 @@ add_custom_target(
 add_dependencies(hehcraft Shaders)
 
 add_custom_target(CopyModels ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    ${CMAKE_SOURCE_DIR}/models
-    ${CMAKE_BINARY_DIR}/models
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+  ${CMAKE_SOURCE_DIR}/models
+  ${CMAKE_BINARY_DIR}/models
 )
 
 add_dependencies(hehcraft CopyModels)

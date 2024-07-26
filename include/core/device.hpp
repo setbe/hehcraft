@@ -1,6 +1,6 @@
 #pragma once
 
-#include "window.hpp"
+#include "core/window.hpp"
 
 // Standard libraries
 #include <string>
@@ -27,6 +27,7 @@ struct QueueFamilyIndices {
 
 class Device {
  public:
+
 #ifdef NDEBUG
   static constexpr bool kEnableValidationLayers = false;
 #else

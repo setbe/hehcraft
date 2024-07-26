@@ -1,4 +1,4 @@
-#include "game_object.hpp"
+#include "core/game_object.hpp"
 
 namespace heh {
 
@@ -60,6 +60,19 @@ glm::mat4 TransformComponent::Mat4()
         inv_scale.z * (c1 * c2),
       }
     };
+  }
+
+  GameObject GameObject::MakePointLight(
+    float intensity,
+    float radius,
+    glm::vec3 color)
+  {
+    GameObject obj = Create();
+    obj.color = color;
+    obj.transform.scale.x = radius;
+    obj.point_light = std::make_unique<PointLightComponent>();
+    obj.point_light->light_intensity = intensity;
+    return obj;
   }
 
 }; // namespace heh

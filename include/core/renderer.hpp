@@ -1,8 +1,8 @@
 #pragma once
 
-#include "device.hpp"
-#include "swap_chain.hpp"
-#include "window.hpp"
+#include "core/device.hpp"
+#include "core/swap_chain.hpp"
+#include "core/window.hpp"
 
 // std
 #include <cassert>

@@ -18,5 +18,11 @@ rebuild: clean
 	@cd $(BUILD_DIR) && cmake ..
 	@cd $(BUILD_DIR) && make
 
+minsize: clean
+	@mkdir $(BUILD_DIR)
+	@cd $(BUILD_DIR) && cmake .. -DCMAKE_BUILD_TYPE=MinSizeRel
+	@cd $(BUILD_DIR) && cmake --build .
+	@strip $(BINARY)
+
 run: default
 	@cd $(BUILD_DIR) && ./$(PROJECT_NAME)

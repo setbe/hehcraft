@@ -1,6 +1,6 @@
 #pragma once
 
-#include "device.hpp"
+#include "core/device.hpp"
 
 // Standard library headers
 #include <memory>

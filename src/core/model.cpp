@@ -1,6 +1,6 @@
-#include "model.hpp"
+#include "core/model.hpp"
 
-#include "utils.hpp"
+#include "core/utils.hpp"
 
 // std
 #include <cassert>
