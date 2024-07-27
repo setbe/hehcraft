@@ -1,15 +1,16 @@
 #include "core/model.hpp"
 
-#include "core/utils.hpp"
-
 // std
 #include <cassert>
 #include <cstring>
 #include <unordered_map>
 
+#include <iostream>
+
 // tinyobjloader
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
@@ -27,6 +28,21 @@ struct hash<heh::Model::Vertex> {
 
 namespace heh {
 
+// Helper function to get the last word after a slash
+std::string extract_last_word_after_slash(const std::string& input) {
+    size_t last_slash_pos = input.find_last_of('/');
+    if (last_slash_pos != std::string::npos) {
+        return input.substr(last_slash_pos + 1);
+    }
+    throw std::runtime_error("Failed to extract last word after slash");
+}
+
+struct ModelData {
+  tinyobj::attrib_t attrib;
+  std::vector<tinyobj::shape_t> shapes;
+  std::vector<tinyobj::material_t> materials;
+};
+
 Model::Model(Device &device, const Model::Builder &builder) 
   : device_{device} 
 {
@@ -36,7 +52,7 @@ Model::Model(Device &device, const Model::Builder &builder)
 
 Model::~Model() {}
 
-std::unique_ptr<Model> Model::CreateModelFromFile(
+std::unique_ptr<Model> Model::CreateModel(
   Device &device, const std::string &filename)
 {
   Builder builder{};
@@ -147,14 +163,14 @@ std::vector<VkVertexInputAttributeDescription> Model::Vertex::GetAttributeDescri
   return attribute_descriptions;
 }
 
-void Model::Builder::LoadModel(const std::string &filename)
+void Model::Builder::LoadModel(const std::string &base_dir)
 {
-  tinyobj::attrib_t attrib;
-  std::vector<tinyobj::shape_t> shapes;
-  std::vector<tinyobj::material_t> materials;
+  ModelData data;
   std::string warn, err;
 
-  if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, filename.c_str())) 
+  std::string obj_name = base_dir + "/" + extract_last_word_after_slash(base_dir) + ".obj";
+
+  if (!tinyobj::LoadObj(&data.attrib, &data.shapes, &data.materials, &warn, &err, obj_name.c_str(), base_dir.c_str())) 
     throw std::runtime_error(warn + err);
 
   vertices.clear();
@@ -162,7 +178,7 @@ void Model::Builder::LoadModel(const std::string &filename)
 
   std::unordered_map<Vertex, uint32_t> unique_vertices{};
 
-  for (const auto &shape : shapes) 
+  for (const auto &shape : data.shapes) 
   {
     for (const auto &index : shape.mesh.indices) 
     {
@@ -171,25 +187,27 @@ void Model::Builder::LoadModel(const std::string &filename)
       if (index.vertex_index >= 0) 
       {
         vertex.position = {
-          attrib.vertices[3 * index.vertex_index + 0],
-          attrib.vertices[3 * index.vertex_index + 1],
-          attrib.vertices[3 * index.vertex_index + 2]};
+          data.attrib.vertices[3 * index.vertex_index + 0],
+          data.attrib.vertices[3 * index.vertex_index + 1],
+          data.attrib.vertices[3 * index.vertex_index + 2]};
         vertex.color = {
-          attrib.colors[3 * index.vertex_index + 0],
-          attrib.colors[3 * index.vertex_index + 1],
-          attrib.colors[3 * index.vertex_index + 2]};
+          data.attrib.colors[3 * index.vertex_index + 0],
+          data.attrib.colors[3 * index.vertex_index + 1],
+          data.attrib.colors[3 * index.vertex_index + 2]};
       }
 
       if (index.normal_index >= 0) {
         vertex.normal = {
-          attrib.normals[3 * index.normal_index + 0],
-          attrib.normals[3 * index.normal_index + 1],
-          attrib.normals[3 * index.normal_index + 2]};
+          data.attrib.normals[3 * index.normal_index + 0],
+          data.attrib.normals[3 * index.normal_index + 1],
+          data.attrib.normals[3 * index.normal_index + 2]
+        };
       }
       if (index.texcoord_index >= 0) {
         vertex.uv = {
-          attrib.texcoords[2 * index.texcoord_index + 0],
-          attrib.texcoords[2 * index.texcoord_index + 1]};
+          data.attrib.texcoords[2 * index.texcoord_index + 0],
+          data.attrib.texcoords[2 * index.texcoord_index + 1]
+        };
       }
 
       if (unique_vertices.count(vertex) == 0) {
@@ -199,6 +217,11 @@ void Model::Builder::LoadModel(const std::string &filename)
 
       indices.push_back(unique_vertices[vertex]);
     }
+  }
+
+  for (const auto& material : data.materials) {
+    std::cout << "Material name: " << material.name << std::endl;
+    std::cout << "Diffuse texture: " << material.diffuse_texname << std::endl;
   }
 }
 

@@ -48,6 +48,7 @@ class Device {
   VkSurfaceKHR GetSurface() const { return surface_; }
   VkQueue GetGraphicsQueue() const { return graphics_queue_; }
   VkQueue GetPresentQueue() const { return present_queue_; }
+  VkPhysicalDevice GetPhysicalDevice() const { return physical_device_; }
 
   SwapChainSupportDetails GetSwapChainSupport() const {
     return QuerySwapChainSupport(physical_device_);

@@ -29,6 +29,7 @@ set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
 
 # Include directories
 include_directories(${GLM_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/external)
 include_directories(${CMAKE_SOURCE_DIR}/external/tiny_obj_loader)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
@@ -56,6 +57,7 @@ set(CORE_SOURCES
   src/core/game_object.cpp
   src/core/buffer.cpp
   src/core/descriptors.cpp
+  src/core/texture.cpp
 )
 
 set(CORE_SYSTEMS_SOURCES

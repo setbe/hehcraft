@@ -2,6 +2,7 @@
 
 #include "core/device.hpp"
 #include "core/buffer.hpp"
+#include "core/utils.hpp" // for extracting word from path
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -37,7 +38,13 @@ class Model {
     std::vector<Vertex> vertices{};
     std::vector<uint32_t> indices{};
 
-    void LoadModel(const std::string &filename);
+    /**
+     * @brief Load a model from a file
+     * @param base_dir The base directory of the model
+     * @note Only OBJ files are supported
+     * @note Object filename must be named as base_dir
+     */
+    void LoadModel(const std::string &base_dir);
   };
 
   Model(Device &device, const Builder &builder);
@@ -46,7 +53,15 @@ class Model {
   Model(const Model &) = delete;
   Model &operator=(const Model &) = delete;
 
-  static std::unique_ptr<Model> CreateModelFromFile(Device &device, const std::string &filename);
+  /**
+   * @brief Create a model from a file
+   * @param device The logical device
+   * @param base_dir The base directory of the model
+   * @return Unique pointer to the model
+   * @note Only OBJ files are supported
+   * @note Object filename must be named as base_dir
+   */
+  static std::unique_ptr<Model> CreateModel(Device &device, const std::string &base_dir);
 
   void Bind(VkCommandBuffer command_buffer);
   void Draw(VkCommandBuffer command_buffer);
