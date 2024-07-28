@@ -180,6 +180,15 @@ void App::LoadGameObjects()
   grass.transform.scale = glm::vec3{.15f, .15f, .15f};
   game_objects_.emplace(grass.GetId(), std::move(grass));
 
+  for (int i = 0; i < 10; i++) {
+    model = Model::CreateModel(device_, "grass");
+    GameObject cube = GameObject::Create();
+    cube.model = model;
+    cube.transform.translation = {i * 0.5f, 0.f, 0.f};
+    cube.transform.scale = glm::vec3{.2f};
+    game_objects_.emplace(cube.GetId(), std::move(cube));
+  }
+
   std::vector<glm::vec3> lightColors{
     {1.f, .1f, .1f},
     {.1f, .1f, 1.f},
