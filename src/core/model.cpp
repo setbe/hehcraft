@@ -28,15 +28,6 @@ struct hash<heh::Model::Vertex> {
 
 namespace heh {
 
-// Helper function to get the last word after a slash
-std::string extract_last_word_after_slash(const std::string& input) {
-    size_t last_slash_pos = input.find_last_of('/');
-    if (last_slash_pos != std::string::npos) {
-        return input.substr(last_slash_pos + 1);
-    }
-    throw std::runtime_error("Failed to extract last word after slash");
-}
-
 struct ModelData {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -44,7 +35,7 @@ struct ModelData {
 };
 
 Model::Model(Device &device, const Model::Builder &builder) 
-  : device_{device} 
+  : device_{device}, texture_{device, GetTexturePath(builder.model_name)}
 {
   CreateVertexBuffers(builder.vertices);
   CreateIndexBuffers(builder.indices);
@@ -56,7 +47,8 @@ std::unique_ptr<Model> Model::CreateModel(
   Device &device, const std::string &filename)
 {
   Builder builder{};
-  builder.LoadModel(filename);
+  builder.model_name = filename;
+  builder.LoadModel();
   return std::make_unique<Model>(device, builder);
 }
 
@@ -163,12 +155,13 @@ std::vector<VkVertexInputAttributeDescription> Model::Vertex::GetAttributeDescri
   return attribute_descriptions;
 }
 
-void Model::Builder::LoadModel(const std::string &base_dir)
+void Model::Builder::LoadModel()
 {
   ModelData data;
   std::string warn, err;
 
-  std::string obj_name = base_dir + "/" + extract_last_word_after_slash(base_dir) + ".obj";
+  std::string base_dir = GetBasePath(model_name);
+  std::string obj_name = base_dir + model_name + ".obj";
 
   if (!tinyobj::LoadObj(&data.attrib, &data.shapes, &data.materials, &warn, &err, obj_name.c_str(), base_dir.c_str())) 
     throw std::runtime_error(warn + err);

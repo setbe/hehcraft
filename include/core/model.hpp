@@ -3,6 +3,7 @@
 #include "core/device.hpp"
 #include "core/buffer.hpp"
 #include "core/utils.hpp" // for extracting word from path
+#include "texture.hpp"
 
 // libs
 #define GLM_FORCE_RADIANS
@@ -37,14 +38,13 @@ class Model {
   struct Builder {
     std::vector<Vertex> vertices{};
     std::vector<uint32_t> indices{};
+    std::string model_name{};
 
     /**
      * @brief Load a model from a file
-     * @param base_dir The base directory of the model
-     * @note Only OBJ files are supported
-     * @note Object filename must be named as base_dir
+     * @note model_name must be the name of the 3D object file (.obj) without the extension 
      */
-    void LoadModel(const std::string &base_dir);
+    void LoadModel();
   };
 
   Model(Device &device, const Builder &builder);
@@ -56,21 +56,26 @@ class Model {
   /**
    * @brief Create a model from a file
    * @param device The logical device
-   * @param base_dir The base directory of the model
+   * @param model_name The name of the model file
    * @return Unique pointer to the model
-   * @note Only OBJ files are supported
-   * @note Object filename must be named as base_dir
+   * @note model_name must be the name of the 3D object file (.obj) without the extension
    */
-  static std::unique_ptr<Model> CreateModel(Device &device, const std::string &base_dir);
+  static std::unique_ptr<Model> CreateModel(Device &device, const std::string &model_name);
 
   void Bind(VkCommandBuffer command_buffer);
   void Draw(VkCommandBuffer command_buffer);
+
+  VkDescriptorImageInfo GetTextureDescriptorInfo() const { return texture_.GetDescriptorInfo(); }
+
+  static std::string GetBasePath(const std::string &model_name) { return "models/" + model_name + "/"; }
+  static std::string GetTexturePath(const std::string &model_name) { return GetBasePath(model_name) + "textures/" + "texture.png"; }
 
  private:
   void CreateVertexBuffers(const std::vector<Vertex> &vertices);
   void CreateIndexBuffers(const std::vector<uint32_t> &indices);
 
   Device &device_;
+  Texture texture_;
 
   std::unique_ptr<Buffer> vertex_buffer_;
   uint32_t vertex_count_{};

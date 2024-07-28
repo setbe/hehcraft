@@ -6,7 +6,7 @@
 
 namespace heh {
 
-Texture::Texture(Device &device, const char* filepath, bool has_alpha)
+Texture::Texture(Device &device, const std::string &filepath, bool has_alpha)
   : device_{device}
 {
   Load(filepath, has_alpha);
@@ -20,14 +20,14 @@ Texture::~Texture()
   vkDestroySampler(device_.GetDevice(), sampler_, nullptr);
 }
 
-void Texture::Load(const char* filepath, bool has_alpha)
+void Texture::Load(const std::string &filepath, bool has_alpha)
 {
   int tex_channels;
   int stbi_channels = has_alpha ? STBI_rgb_alpha : STBI_rgb;
   format_ = has_alpha ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8_SRGB;
 
   stbi_uc* pixels = stbi_load(
-    filepath, 
+    filepath.c_str(), 
     &width_, 
     &height_, 
     &tex_channels,  // just ignore after getting the channels

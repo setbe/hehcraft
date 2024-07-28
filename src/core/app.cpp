@@ -58,22 +58,21 @@ void App::Run()
     .AddBinding(1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
     .Build();
 
-  Texture texture{device_, "models/grass/textures/grass_unwrapped.png"};
   VkDescriptorImageInfo image_info{};
-  image_info.sampler = texture.GetSampler();
-  image_info.imageView = texture.GetImageView();
-  image_info.imageLayout = texture.GetImageLayout();
+  image_info = game_objects_.at(0).model->GetTextureDescriptorInfo();
 
 
   // Initialize descriptor sets
   std::vector<VkDescriptorSet> global_descriptor_sets(SwapChain::kMaxFramesInFlight);
-  for (int i = 0; i < global_descriptor_sets.size(); ++i) {
+  for (int i = 0; i < global_descriptor_sets.size(); ++i) 
+  {
     auto buffer_info = ubo_buffers[i]->DescriptorInfo();
     DescriptorWriter(*global_set_layout, *global_pool_)
       .WriteBuffer(0, &buffer_info)
       .WriteImage(1, &image_info)
       .Build(global_descriptor_sets[i]);
   }
+
 
   SimpleRenderSystem simple_render_system{
     device_, 
@@ -146,39 +145,39 @@ void App::Run()
 
 void App::LoadGameObjects() 
 {
-  std::shared_ptr<Model> model = Model::CreateModel(device_, "models/smooth_vase");
-  GameObject smooth = GameObject::Create();
-  smooth.model = model;
-  smooth.transform.translation = {0.5f, 0.f, -2.5f};
-  smooth.transform.scale = glm::vec3{1.f, 1.f, 1.f};
-  game_objects_.emplace(smooth.GetId(), std::move(smooth));
+  // std::shared_ptr<Model> model = Model::CreateModel(device_, "models/smooth_vase");
+  // GameObject smooth = GameObject::Create();
+  // smooth.model = model;
+  // smooth.transform.translation = {0.5f, 0.f, -2.5f};
+  // smooth.transform.scale = glm::vec3{1.f, 1.f, 1.f};
+  // game_objects_.emplace(smooth.GetId(), std::move(smooth));
 
-  model = Model::CreateModel(device_, "models/flat_vase");
-  GameObject flat = GameObject::Create();
-  flat.model = model;
-  flat.transform.translation = {-0.5f, 0.f, -1.f};
-  flat.transform.scale = glm::vec3{1.f, 1.f, 1.f};
-  game_objects_.emplace(flat.GetId(), std::move(flat));
+  // model = Model::CreateModel(device_, "models/flat_vase");
+  // GameObject flat = GameObject::Create();
+  // flat.model = model;
+  // flat.transform.translation = {-0.5f, 0.f, -1.f};
+  // flat.transform.scale = glm::vec3{1.f, 1.f, 1.f};
+  // game_objects_.emplace(flat.GetId(), std::move(flat));
 
-  model = Model::CreateModel(device_, "models/cube");
-  GameObject cube = GameObject::Create();
-  cube.model = model;
-  cube.transform.translation = {-1.5f, -0.2f, 0.f};
-  cube.transform.scale = glm::vec3{.2f};
-  game_objects_.emplace(cube.GetId(), std::move(cube));
+  // model = Model::CreateModel(device_, "models/cube");
+  // GameObject cube = GameObject::Create();
+  // cube.model = model;
+  // cube.transform.translation = {-1.5f, -0.2f, 0.f};
+  // cube.transform.scale = glm::vec3{.2f};
+  // game_objects_.emplace(cube.GetId(), std::move(cube));
 
-  model = Model::CreateModel(device_, "models/quad");
-  GameObject floor = GameObject::Create();
-  floor.model = model;
-  floor.transform.translation = {0.f, 0.f, 0.f};
-  floor.transform.scale = glm::vec3{3.f, 1.f, 3.f};
-  game_objects_.emplace(floor.GetId(), std::move(floor));
+  // model = Model::CreateModel(device_, "models/quad");
+  // GameObject floor = GameObject::Create();
+  // floor.model = model;
+  // floor.transform.translation = {0.f, 0.f, 0.f};
+  // floor.transform.scale = glm::vec3{3.f, 1.f, 3.f};
+  // game_objects_.emplace(floor.GetId(), std::move(floor));
 
-  model = Model::CreateModel(device_, "models/grass");
+  std::shared_ptr<Model> model = Model::CreateModel(device_, "grass");
   GameObject grass = GameObject::Create();
   grass.model = model;
   grass.transform.translation = {-1.5f, -.5f, -1.f};
-  grass.transform.scale = glm::vec3{.1f, .1f, .1f};
+  grass.transform.scale = glm::vec3{.15f, .15f, .15f};
   game_objects_.emplace(grass.GetId(), std::move(grass));
 
   std::vector<glm::vec3> lightColors{

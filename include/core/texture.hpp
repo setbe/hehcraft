@@ -14,7 +14,7 @@ namespace heh {
 
 class Texture {
  public:
-  Texture(Device &device, const char* filepath, bool has_alpha = true);
+  Texture(Device &device, const std::string &filepath, bool has_alpha = true);
 
   ~Texture();
 
@@ -26,9 +26,12 @@ class Texture {
   VkImageView GetImageView() const { return image_view_; }
   VkSampler GetSampler() const { return sampler_; }
   VkImageLayout GetImageLayout() const { return image_layout_; }
+  VkDescriptorImageInfo GetDescriptorInfo() const {
+    return {sampler_, image_view_, image_layout_};
+  }
 
  private:
-  void Load(const char* filepath, bool has_alpha = true);
+  void Load(const std::string &filepath, bool has_alpha = true);
 
   void CreateImageView(VkImageAspectFlags aspect_flags, bool has_alpha);
   void CreateSampler();
