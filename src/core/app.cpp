@@ -101,6 +101,8 @@ void App::Run()
     current_time = new_time;
 
     camera_controller.MoveInPlaneXZ(window_.GetGLFWwindow(), viewer_object, frame_time);
+    camera_controller.Look(window_.GetGLFWwindow(), viewer_object, frame_time);
+    camera_controller.UpdateCursorState(window_.GetGLFWwindow());
     camera.SetViewYXZ(viewer_object.transform.translation, viewer_object.transform.rotation);
 
     float aspect = renderer_.GetAspectRatio();

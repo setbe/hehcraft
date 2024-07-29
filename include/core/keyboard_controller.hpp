@@ -12,12 +12,9 @@ class KeyboardController {
     int move_right = GLFW_KEY_D;
     int move_forward = GLFW_KEY_W;
     int move_backward = GLFW_KEY_S;
-    int move_up = GLFW_KEY_E;
-    int move_down = GLFW_KEY_Q;
-    int look_left = GLFW_KEY_LEFT;
-    int look_right = GLFW_KEY_RIGHT;
-    int look_up = GLFW_KEY_UP;
-    int look_down = GLFW_KEY_DOWN;
+    int move_up = GLFW_KEY_SPACE;
+    int move_down = GLFW_KEY_LEFT_SHIFT;
+    int show_cursor = GLFW_KEY_LEFT_ALT;
   };  // struct KeyMap
 
   void MoveInPlaneXZ(
@@ -27,11 +24,20 @@ class KeyboardController {
 
   void Look(
       GLFWwindow *window, 
-      GameObject &game_object);
+      GameObject &game_object, 
+      float delta_time);
+
+  void UpdateCursorState(GLFWwindow *window);
 
   KeyMap key{};
   float movement_speed{3.f};
-  float look_speed{1.5f};
+  float look_speed{0.1f};
+  bool first_mouse{true};
+  float last_x{400.0f};
+  float last_y{300.0f};
+  float yaw{0.0f};
+  float pitch{0.0f};
+  bool cursor_visible{false};
 
 };  // class KeyboardController
 
