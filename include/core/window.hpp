@@ -1,31 +1,35 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <string>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace heh {
 
 class Window {
  public:
-  Window(int width, int height, std::string window_name);
+  Window(int width, int height, const std::string &window_name);
   ~Window();
 
   Window(const Window&) = delete;
   Window& operator=(const Window&) = delete;
 
-  bool ShouldClose() const { return glfwWindowShouldClose(window_); }
-  VkExtent2D GetExtent() const { return {static_cast<uint32_t>(width_), static_cast<uint32_t>(height_)}; }
-  bool WasWindowResized() const { return framebuffer_resized_; }
-  void ResetWindowResizedFlag() { framebuffer_resized_ = false; }
+  bool WasResized() const { return framebuffer_resized_; }
+  void ResetResizedFlag() { framebuffer_resized_ = false; }
+  void Run();
 
-  void CreateWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
   GLFWwindow* GetGLFWwindow() const { return window_; }
 
  private:
   static void FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int height);
+  static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+  
   void InitWindow();
+  void Cleanup();
 
   int width_;
   int height_;

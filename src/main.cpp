@@ -1,11 +1,17 @@
 #include "core/window.hpp"
 
-int main() {
-  heh::Window window(800, 600, "Hello, World!");
+#include <iostream>
 
-  while (!window.ShouldClose()) {
-    glfwPollEvents();
+int main() {
+
+  
+  try {
+    heh::Window window(800, 600, "Hello, World!");
+    window.Run();
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    return EXIT_FAILURE;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
