@@ -1,8 +1,10 @@
 #pragma once
 
+// libs
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+// std
 #include <string>
 #include <stdexcept>
 #include <fstream>

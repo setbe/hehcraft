@@ -1,6 +1,9 @@
 #pragma once
 
+// libs
 #include <glad/glad.h>
+
+// std
 #include <stdexcept>
 
 class Buffer {
@@ -49,7 +52,7 @@ class VertexArray {
 
   inline void Bind() const { glBindVertexArray(id_); }
   inline void Unbind() const { glBindVertexArray(0); }
-  
+
   inline GLuint GetID() const { return id_; }
 
  private:

@@ -15,8 +15,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-# set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
-# set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
+set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
 
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Oz -s")
 # set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Oz -s")
@@ -45,6 +45,8 @@ endif()
 set(CORE_SOURCES
   src/core/window.cpp
   src/core/glad.c
+  src/core/texture.cpp
+  src/core/block.cpp
 )
 
 set(SOURCE_FILES
@@ -78,32 +80,26 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
   "${CMAKE_SOURCE_DIR}/shaders/*.vert"
 )
 
-# Set the output directory for the compiled shader files
-set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
-
-# Ensure the SHADER_OUTPUT_DIR exists
-file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
-
-# Create a list to hold the compiled shader files
-set(COMPILED_SHADER_FILES)
-
-# Copy each shader file to the output directory
-foreach(GLSL ${GLSL_SOURCE_FILES})
-  get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(COMPILED_SHADER "${SHADER_OUTPUT_DIR}/${FILE_NAME}")
-  add_custom_command(
-    OUTPUT ${COMPILED_SHADER}
-    COMMAND ${CMAKE_COMMAND} -E copy ${GLSL} ${COMPILED_SHADER}
-    DEPENDS ${GLSL}
-    COMMENT "Copying ${GLSL} to ${COMPILED_SHADER}"
-  )
-  list(APPEND COMPILED_SHADER_FILES ${COMPILED_SHADER})
-endforeach()
-
-# Create a custom target to copy the shaders
-add_custom_target(
-  Shaders
-  DEPENDS ${COMPILED_SHADER_FILES}
+# Get all texture files in textures directory
+file(GLOB_RECURSE TEXTURE_FILES
+  "${CMAKE_SOURCE_DIR}/textures/*"
 )
 
-add_dependencies(hehcraft Shaders)
+# Set the output directory for the compiled shader and texture files
+set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
+set(TEXTURE_OUTPUT_DIR "${CMAKE_BINARY_DIR}/textures")
+
+# Ensure the SHADER_OUTPUT_DIR and TEXTURE_OUTPUT_DIR exist
+file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
+file(MAKE_DIRECTORY ${TEXTURE_OUTPUT_DIR})
+
+# Copy each shader file to the output directory
+file(COPY ${GLSL_SOURCE_FILES} DESTINATION ${SHADER_OUTPUT_DIR})
+
+# Copy the entire textures directory to the build directory
+file(COPY ${CMAKE_SOURCE_DIR}/textures DESTINATION ${CMAKE_BINARY_DIR})
+
+# Create custom target to ensure shaders and textures are copied
+add_custom_target(CopyAssets ALL DEPENDS ${SHADER_OUTPUT_DIR} ${TEXTURE_OUTPUT_DIR})
+
+add_dependencies(hehcraft CopyAssets)

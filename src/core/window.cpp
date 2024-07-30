@@ -1,6 +1,7 @@
 #include "core/window.hpp"
 #include "core/buffer.hpp"
 #include "core/shader.hpp"
+#include "core/block.hpp"
 
 // Standard libraries
 #include <stdexcept>
@@ -56,10 +57,11 @@ void Window::InitWindow() {
 
 void Window::Run() {
   float vertices[] = {
-    0.5f, 0.5f, 0.0f, // top right
-    0.5f, -0.5f, 0.0f, // bottom right
-    -0.5f, -0.5f, 0.0f, // bottom left
-    -0.5f, 0.5f, 0.0f // top left
+  // positions // colors // texture coords
+  0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+  0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+  -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+  -0.5f, 0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f // top left
   };
   unsigned int indices[] = {
     0, 1, 3, // first triangle
@@ -79,14 +81,26 @@ void Window::Run() {
   element_buffer.Bind(); // EBO
   element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
 
-  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  // Position attribute
+  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
   vertex_array.EnableVertexAttribArray(0);
+
+  // Color attribute
+  vertex_array.VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+  vertex_array.EnableVertexAttribArray(1);
+
+  // Texture attribute
+  vertex_array.VertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+  vertex_array.EnableVertexAttribArray(2);
+
+  GrassTexture grass(GrassTexture::Face::kFront);
 
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
   while (!glfwWindowShouldClose(window_)) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    grass.Bind();
     shader.Use();
     vertex_array.Bind();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
