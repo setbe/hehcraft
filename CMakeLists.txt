@@ -21,8 +21,6 @@ set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Oz -s")
 # set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Oz -s")
 
-# add_definitions(-DNDEBUG)
-
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
 set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
@@ -30,12 +28,12 @@ set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
 # Include directories
 include_directories(${GLM_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/external)
+include_directories(${CMAKE_SOURCE_DIR}/external/glad)
 include_directories(${CMAKE_SOURCE_DIR}/external/tiny_obj_loader)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Find packages
-# find_package(OpenGL REQUIRED)
-find_package(Vulkan REQUIRED)
+find_package(OpenGL REQUIRED)
 
 # Manually specify the paths to GLFW if not found by find_package
 if (NOT TARGET glfw)
@@ -46,23 +44,7 @@ endif()
 
 set(CORE_SOURCES
   src/core/window.cpp
-  src/core/pipeline.cpp
-  src/core/device.cpp
-  src/core/swap_chain.cpp
-  src/core/model.cpp
-  src/core/renderer.cpp
-  src/core/app.cpp
-  src/core/camera.cpp
-  src/core/keyboard_controller.cpp
-  src/core/game_object.cpp
-  src/core/buffer.cpp
-  src/core/descriptors.cpp
-  src/core/texture.cpp
-)
-
-set(CORE_SYSTEMS_SOURCES
-  src/core/systems/simple_render.cpp
-  src/core/systems/point_light.cpp
+  src/core/glad.c
 )
 
 set(SOURCE_FILES
@@ -80,7 +62,6 @@ add_executable(hehcraft
 target_link_libraries(hehcraft
   glfw
   ${OPENGL_LIBRARIES}
-  Vulkan::Vulkan
 )
 
 if (WIN32)
@@ -91,60 +72,38 @@ if (UNIX)
   target_link_libraries(hehcraft GL X11 Xxf86vm Xrandr Xi pthread dl)
 endif()
 
-
-
-# Find the glslangValidator executable
-find_program(GLSL_VALIDATOR glslangValidator HINTS
-  "$ENV{VULKAN_SDK}/Bin"
-  "/usr/bin"
-  "/usr/local/bin"
-)
-
-# Ensure the GLSL_VALIDATOR was found
-if (NOT GLSL_VALIDATOR)
-  message(FATAL_ERROR "glslangValidator not found. Please install or set VULKAN_SDK environment variable.")
-endif()
-
 # Get all .vert and .frag files in shaders directory
 file(GLOB_RECURSE GLSL_SOURCE_FILES
   "${CMAKE_SOURCE_DIR}/shaders/*.frag"
   "${CMAKE_SOURCE_DIR}/shaders/*.vert"
 )
 
-# Set the output directory for the SPIR-V files
-set(SPIRV_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
+# Set the output directory for the compiled shader files
+set(SHADER_OUTPUT_DIR "${CMAKE_BINARY_DIR}/shaders")
 
-# Ensure the SPIRV_OUTPUT_DIR exists
-file(MAKE_DIRECTORY ${SPIRV_OUTPUT_DIR})
+# Ensure the SHADER_OUTPUT_DIR exists
+file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
 
-# Create a list to hold the SPIR-V files
-set(SPIRV_BINARY_FILES)
+# Create a list to hold the compiled shader files
+set(COMPILED_SHADER_FILES)
 
-# Compile each GLSL file to SPIR-V
+# Copy each shader file to the output directory
 foreach(GLSL ${GLSL_SOURCE_FILES})
   get_filename_component(FILE_NAME ${GLSL} NAME)
-  set(SPIRV "${SPIRV_OUTPUT_DIR}/${FILE_NAME}.spv")
+  set(COMPILED_SHADER "${SHADER_OUTPUT_DIR}/${FILE_NAME}")
   add_custom_command(
-    OUTPUT ${SPIRV}
-    COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+    OUTPUT ${COMPILED_SHADER}
+    COMMAND ${CMAKE_COMMAND} -E copy ${GLSL} ${COMPILED_SHADER}
     DEPENDS ${GLSL}
-    COMMENT "Compiling ${GLSL} to SPIR-V"
+    COMMENT "Copying ${GLSL} to ${COMPILED_SHADER}"
   )
-  list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+  list(APPEND COMPILED_SHADER_FILES ${COMPILED_SHADER})
 endforeach()
 
-# Create a custom target to compile the shaders
+# Create a custom target to copy the shaders
 add_custom_target(
   Shaders
-  DEPENDS ${SPIRV_BINARY_FILES}
+  DEPENDS ${COMPILED_SHADER_FILES}
 )
 
 add_dependencies(hehcraft Shaders)
-
-add_custom_target(CopyModels ALL
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-  ${CMAKE_SOURCE_DIR}/models
-  ${CMAKE_BINARY_DIR}/models
-)
-
-add_dependencies(hehcraft CopyModels)

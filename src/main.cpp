@@ -1,20 +1,11 @@
-
-#include "core/app.hpp"
-
-// std
-#include <cstdlib>
-#include <iostream>
-#include <stdexcept>
+#include "core/window.hpp"
 
 int main() {
-  heh::App app{};
+  heh::Window window(800, 600, "Hello, World!");
 
-  try {
-    app.Run();
-  } catch (const std::exception &e) {
-    std::cerr << e.what() << '\n';
-    return EXIT_FAILURE;
+  while (!window.ShouldClose()) {
+    glfwPollEvents();
   }
 
-  return EXIT_SUCCESS;
+  return 0;
 }
