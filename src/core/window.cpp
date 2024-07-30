@@ -9,6 +9,18 @@
 
 namespace heh {
 
+void UpdateWindowTitleWithFPS(GLFWwindow* window, const std::string& baseTitle, double& lastTime, int& nbFrames) {
+  double currentTime = glfwGetTime();
+  nbFrames++;
+  if (currentTime - lastTime >= 1.0) { // If last time is more than 1 sec ago
+      std::stringstream ss;
+      ss << baseTitle << " [" << nbFrames << " FPS]";
+      glfwSetWindowTitle(window, ss.str().c_str());
+      nbFrames = 0;
+      lastTime += 1.0;
+  }
+}
+
 void InitializeGlfw() {
   static bool glfw_initialized = false;
 
@@ -44,6 +56,7 @@ void Window::InitWindow() {
   }
 
   glfwMakeContextCurrent(window_);
+  glfwSwapInterval(0); // Disable VSync
   if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
     glfwTerminate();
     throw std::runtime_error("Failed to initialize GLAD");
@@ -95,8 +108,13 @@ void Window::Run() {
 
   GrassTexture grass(GrassTexture::Face::kFront);
 
+  double last_time_ = glfwGetTime();
+  int nb_frames_ = 0;
+
   //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
   while (!glfwWindowShouldClose(window_)) {
+    UpdateWindowTitleWithFPS(window_, window_name_, last_time_, nb_frames_);
+    
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
