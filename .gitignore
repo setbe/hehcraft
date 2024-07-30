@@ -2,3 +2,5 @@ build
 .vscode
 external/stb/*
 external/tiny_obj_loader/*
+external/glad/glad/*
+external/glad/KHR/*

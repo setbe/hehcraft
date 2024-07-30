@@ -56,36 +56,41 @@ void Window::InitWindow() {
 
 void Window::Run() {
   float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    0.0f, 0.5f, 0.0f
+    0.5f, 0.5f, 0.0f, // top right
+    0.5f, -0.5f, 0.0f, // bottom right
+    -0.5f, -0.5f, 0.0f, // bottom left
+    -0.5f, 0.5f, 0.0f // top left
+  };
+  unsigned int indices[] = {
+    0, 1, 3, // first triangle
+    1, 2, 3 // second triangle
   };
 
   Shader shader("shaders/simple.vert", "shaders/simple.frag");
   
-  Buffer vBo(GL_ARRAY_BUFFER);
-  VertexArray vAo;
-  vAo.Bind();
+  Buffer element_buffer(GL_ELEMENT_ARRAY_BUFFER);
+  Buffer vertex_buffer(GL_ARRAY_BUFFER);
+  VertexArray vertex_array;
+  vertex_array.Bind();  // VAO
 
-  vBo.Bind();
-  vBo.SetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
-  
-  vAo.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-  vAo.EnableVertexAttribArray(0);
+  vertex_buffer.Bind(); // VBO
+  vertex_buffer.SetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  vBo.Unbind();
-  vAo.Unbind();
+  element_buffer.Bind(); // EBO
+  element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
 
+  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+  vertex_array.EnableVertexAttribArray(0);
+
+  //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
   while (!glfwWindowShouldClose(window_)) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    // draw our first triangle
+
     shader.Use();
-    vAo.Bind();
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    // glBindVertexArray(0); // no need to unbind it every time 
-    // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-    // -------------------------------------------------------------------------------
+    vertex_array.Bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
     glfwSwapBuffers(window_);
     glfwPollEvents();
   }
