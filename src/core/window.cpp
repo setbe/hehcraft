@@ -60,7 +60,20 @@ void InitializeGlfw() {
 }
 
 Window::Window(int width, int height, const std::string &window_name)
-    : width_{width}, height_{height}, window_name_{window_name}, window_{nullptr} {
+    : 
+    width_{width}, 
+    height_{height}, 
+    window_name_{window_name}, 
+    window_{nullptr}, 
+
+    camera_(glm::vec3(0.0f, 0.0f, 3.0f), 
+        -90.0f,   // yaw
+        0.0f,     // pitch
+        70.0f,    // fov
+        (float)width_ / (float)height_,  // aspect
+        0.1f,       // z_near
+        100.0f)    // z_far
+{
   InitWindow();
 }
 
@@ -86,13 +99,21 @@ void Window::InitWindow() {
   glViewport(0, 0, width_, height_);
   glEnable(GL_DEPTH_TEST);
   glfwSetWindowUserPointer(window_, this);
-  glfwSetFramebufferSizeCallback(window_, FramebufferResizeCallback);
-  glfwSetKeyCallback(window_, KeyCallback);
+  glfwSetFramebufferSizeCallback(window_, Window::FramebufferResizeCallback);
+  glfwSetKeyCallback(window_, Window::KeyCallback);
+  glfwSetMouseButtonCallback(window_, Window::MouseButtonCallback);
+  glfwSetCursorPosCallback(window_, Window::CursorPositionCallback);
+  glfwSetScrollCallback(window_, Window::ScrollCallback);
   PrintOpenGLInfo();
 }
 
 void Window::Run() {
-  glm::vec3 cubePositions[] = {
+  double last_time_ = glfwGetTime();
+  double current_time = 0.0;
+  float delta_time = 0.0f;
+  int nb_frames_ = 0;
+
+  glm::vec3 cube_positions[] = {
 glm::vec3( 0.0f, 0.0f, -3.0f),
 glm::vec3( 2.0f, 5.0f, -15.0f),
 glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -172,15 +193,18 @@ glm::vec3(-1.3f, 1.0f, -1.5f)
   shader.SetInt("texture1", 0);
   shader.SetInt("texture2", 1);
 
-  double last_time_ = glfwGetTime();
-  int nb_frames_ = 0;
-
   // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
   while (!glfwWindowShouldClose(window_)) {
+    current_time = glfwGetTime();
+    delta_time = static_cast<float>(current_time - last_time_);
+    last_time_ = current_time;
+
     UpdateWindowTitleWithFPS(window_, window_name_, last_time_, nb_frames_);
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    camera_.Update(delta_time, show_cursor_);
 
     glActiveTexture(GL_TEXTURE0);
     grass.Bind();
@@ -188,16 +212,18 @@ glm::vec3(-1.3f, 1.0f, -1.5f)
     dirt.Bind();
     
     shader.Use();
+    glm::mat4 view = camera_.LookAt();
+    glm::mat4 projection = camera_.GetProjectionMatrix();
+
     for(unsigned int i = 0; i < 10; i++)
     {
       glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, cubePositions[i]);
+      model = glm::translate(model, cube_positions[i]);
       float angle = 20.0f * i;
-      model = glm::rotate(model, glm::radians(angle),
-      glm::vec3(1.0f, 0.3f, 0.5f));
+      model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
       shader.SetMat4("model", model);
-      shader.SetMat4("view", glm::mat4(1.0f));
-      shader.SetMat4("projection", glm::perspective(glm::radians(90.0f), (float)width_ / (float)height_, 0.1f, 100.0f));
+      shader.SetMat4("view", view);
+      shader.SetMat4("projection", projection);
       glDrawArrays(GL_TRIANGLES, 0, 36);
     }
     vertex_array.Bind();
@@ -207,12 +233,25 @@ glm::vec3(-1.3f, 1.0f, -1.5f)
   }
 }
 
-void Window::Cleanup() {
-  if (window_) {
-    glfwDestroyWindow(window_);
-    window_ = nullptr;
+void Window::HandleInput() {
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kEscape))
+    glfwSetWindowShouldClose(window_, GLFW_TRUE);
+
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kF12)) {
+    wireframe_mode_ = !wireframe_mode_;
+    if (wireframe_mode_)
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
-  glfwTerminate();
+
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kLeftAlt)) {
+    show_cursor_ = !show_cursor_;
+    if (show_cursor_)
+      glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    else
+      glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  }
 }
 
 void Window::FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int height) {
@@ -221,12 +260,36 @@ void Window::FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int h
   window->framebuffer_resized_ = true;
   window->width_ = width;
   window->height_ = height;
+  window->camera_.SetAspect((float)width / (float)height);
 }
 
 void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-    glfwSetWindowShouldClose(window, GLFW_TRUE);
+  auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+  window_ptr->keyboard_.HandleKey(key, scancode, action, mods);
+  window_ptr->HandleInput();
+}
+
+void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+  auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+  window_ptr->mouse_.HandleMouseButton(button, action, mods);
+}
+
+void Window::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+  auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+  window_ptr->mouse_.HandleCursorPosition(xpos, ypos);
+}
+
+void Window::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+  auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
+  window_ptr->mouse_.HandleScroll(xoffset, yoffset);
+}
+
+void Window::Cleanup() {
+  if (window_) {
+    glfwDestroyWindow(window_);
+    window_ = nullptr;
   }
+  glfwTerminate();
 }
 
 }  // namespace heh

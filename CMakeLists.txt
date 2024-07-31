@@ -47,6 +47,7 @@ set(CORE_SOURCES
   src/core/glad.c
   src/core/texture.cpp
   src/core/block.cpp
+  src/core/keys_n_mouse.cpp
 )
 
 set(SOURCE_FILES
