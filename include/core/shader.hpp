@@ -11,128 +11,101 @@
 #include <sstream>
 #include <iostream>
 
+namespace heh {
+
+/**
+ * @brief The Shader class represents a shader program in OpenGL.
+ * 
+ * This class provides functionality to load, compile, and link vertex and fragment shaders,
+ * as well as set uniform values in the shader program.
+ */
 class Shader {
  public:
-  Shader(const std::string& vertex_path, const std::string& fragment_path) {
-    // 1. Retrieve the vertex/fragment source code from filePath
-    std::string vertex_code;
-    std::string fragment_code;
-    std::ifstream v_shader_file;
-    std::ifstream f_shader_file;
+  /**
+   * @brief Constructs a Shader object with the specified vertex and fragment shader file paths.
+   * 
+   * @param vertex_path The file path to the vertex shader source code.
+   * @param fragment_path The file path to the fragment shader source code.
+   * 
+   * @throws std::runtime_error if the shader files fail to be read or if there are compilation or linking errors.
+   */
+  Shader(const std::string& vertex_path, const std::string& fragment_path);
 
-    // Ensure ifstream objects can throw exceptions:
-    v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-    f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+  /**
+   * @brief Destroys the Shader object and releases the associated OpenGL resources.
+   */
+  ~Shader();
 
-    try {
-      // Open files
-      v_shader_file.open(vertex_path);
-      f_shader_file.open(fragment_path);
-      std::stringstream v_shader_stream, f_shader_stream;
+  /**
+   * @brief Activates the shader program for use.
+   */
+  void Use() const;
 
-      // Read file's buffer contents into streams
-      v_shader_stream << v_shader_file.rdbuf();
-      f_shader_stream << f_shader_file.rdbuf();
+  /**
+   * @brief Retrieves the ID of the shader program.
+   * 
+   * @return The ID of the shader program.
+   */
+  GLuint GetID() const;
 
-      // Close file handlers
-      v_shader_file.close();
-      f_shader_file.close();
+  /**
+   * @brief Sets a boolean uniform value in the shader program.
+   * 
+   * @param name The name of the boolean uniform.
+   * @param value The boolean value to set.
+   */
+  void SetBool(const std::string& name, bool value) const;
 
-      // Convert stream into string
-      vertex_code = v_shader_stream.str();
-      fragment_code = f_shader_stream.str();
-    } catch (std::ifstream::failure& e) {
-      throw std::runtime_error("ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ");
-    }
+  /**
+   * @brief Sets an integer uniform value in the shader program.
+   * 
+   * @param name The name of the integer uniform.
+   * @param value The integer value to set.
+   */
+  void SetInt(const std::string& name, int value) const;
 
-    const char* v_shader_code = vertex_code.c_str();
-    const char* f_shader_code = fragment_code.c_str();
+  /**
+   * @brief Sets a floating-point uniform value in the shader program.
+   * 
+   * @param name The name of the floating-point uniform.
+   * @param value The floating-point value to set.
+   */
+  void SetFloat(const std::string& name, float value) const;
 
-    // 2. Compile shaders
-    GLuint vertex, fragment;
-    GLint success;
-    GLchar info_log[512];
+  /**
+   * @brief Sets a 2D vector uniform value in the shader program.
+   * 
+   * @param name The name of the 2D vector uniform.
+   * @param value The 2D vector value to set.
+   */
+  void SetVec2(const std::string& name, const glm::vec2& value) const;
 
-    // Vertex Shader
-    vertex = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex, 1, &v_shader_code, nullptr);
-    glCompileShader(vertex);
-    // Print compile errors if any
-    glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
-    if (!success) {
-      glGetShaderInfoLog(vertex, 512, nullptr, info_log);
-      throw std::runtime_error(std::string("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n") + info_log);
-    }
+  /**
+   * @brief Sets a 3D vector uniform value in the shader program.
+   * 
+   * @param name The name of the 3D vector uniform.
+   * @param value The 3D vector value to set.
+   */
+  void SetVec3(const std::string& name, const glm::vec3& value) const;
 
-    // Fragment Shader
-    fragment = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment, 1, &f_shader_code, nullptr);
-    glCompileShader(fragment);
-    // Print compile errors if any
-    glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
-    if (!success) {
-      glGetShaderInfoLog(fragment, 512, nullptr, info_log);
-      throw std::runtime_error(std::string("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n") + info_log);
-    }
+  /**
+   * @brief Sets a 4D vector uniform value in the shader program.
+   * 
+   * @param name The name of the 4D vector uniform.
+   * @param value The 4D vector value to set.
+   */
+  void SetVec4(const std::string& name, const glm::vec4& value) const;
 
-    // Shader Program
-    id_ = glCreateProgram();
-    glAttachShader(id_, vertex);
-    glAttachShader(id_, fragment);
-    glLinkProgram(id_);
-    // Print linking errors if any
-    glGetProgramiv(id_, GL_LINK_STATUS, &success);
-    if (!success) {
-      glGetProgramInfoLog(id_, 512, nullptr, info_log);
-      throw std::runtime_error(std::string("ERROR::SHADER::PROGRAM::LINKING_FAILED\n") + info_log);
-    }
-
-    // Delete the shaders as they're linked into our program now and no longer necessary
-    glDeleteShader(vertex);
-    glDeleteShader(fragment);
-  }
-
-  ~Shader() {
-    glDeleteProgram(id_);
-  }
-
-  void Use() const {
-    glUseProgram(id_);
-  }
-
-  GLuint GetID() const {
-    return id_;
-  }
-
-  // Utility uniform functions
-  void SetBool(const std::string& name, bool value) const {
-    glUniform1i(glGetUniformLocation(id_, name.c_str()), (int)value);
-  }
-
-  void SetInt(const std::string& name, int value) const {
-    glUniform1i(glGetUniformLocation(id_, name.c_str()), value);
-  }
-
-  void SetFloat(const std::string& name, float value) const {
-    glUniform1f(glGetUniformLocation(id_, name.c_str()), value);
-  }
-
-  void SetVec2(const std::string& name, const glm::vec2& value) const {
-    glUniform2fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
-  }
-
-  void SetVec3(const std::string& name, const glm::vec3& value) const {
-    glUniform3fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
-  }
-
-  void SetVec4(const std::string& name, const glm::vec4& value) const {
-    glUniform4fv(glGetUniformLocation(id_, name.c_str()), 1, &value[0]);
-  }
-
-  void SetMat4(const std::string& name, const glm::mat4& mat) const {
-    glUniformMatrix4fv(glGetUniformLocation(id_, name.c_str()), 1, GL_FALSE, &mat[0][0]);
-  }
+  /**
+   * @brief Sets a 4x4 matrix uniform value in the shader program.
+   * 
+   * @param name The name of the matrix uniform.
+   * @param mat The 4x4 matrix value to set.
+   */
+  void SetMat4(const std::string& name, const glm::mat4& mat) const;
 
  private:
-  GLuint id_;
-};
+  GLuint id_; /**< The ID of the shader program. */
+};  // class Shader
+
+} // namespace heh

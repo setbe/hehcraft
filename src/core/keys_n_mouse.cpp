@@ -18,19 +18,19 @@ double Mouse::scroll_x_ = 0.0;
 double Mouse::scroll_y_ = 0.0;
 
 void Mouse::HandleMouseButton(int button, int action, int mods) {
-  buttons_[button] = action;
+  buttons_[button] = action;  // GLFW_PRESS or GLFW_RELEASE
 }
 
 void Mouse::HandleCursorPosition(double xpos, double ypos) {
-  dx_ = xpos - x_;
-  dy_ = ypos - y_;
-  x_ = xpos;
-  y_ = ypos;
+  dx_ = xpos - x_;  // change in x-coordinate
+  dy_ = ypos - y_;  // change in y-coordinate
+  x_ = xpos;  // new x-coordinate
+  y_ = ypos;  // new y-coordinate
 }
 
 void Mouse::HandleScroll(double xoffset, double yoffset) {
-  scroll_x_ = xoffset;
-  scroll_y_ = yoffset;
+  scroll_x_ = xoffset;  // value in range [-1, 1]
+  scroll_y_ = yoffset;  // value in range [-1, 1]
 }
 
 }  // namespace heh

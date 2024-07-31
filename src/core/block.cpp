@@ -9,6 +9,7 @@ std::string GrassTexture::GetFullPath(Face face, const std::string &tex_name) co
     case Face::kBottom:
       return GetBasePath(tex_name) + "bottom.png";
     default:
+      // For left, right, front, and back faces
       return GetBasePath(tex_name) + "side.png";
   }
 }

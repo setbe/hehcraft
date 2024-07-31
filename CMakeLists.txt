@@ -48,6 +48,7 @@ set(CORE_SOURCES
   src/core/texture.cpp
   src/core/block.cpp
   src/core/keys_n_mouse.cpp
+  src/core/shader.cpp
 )
 
 set(SOURCE_FILES

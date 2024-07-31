@@ -86,6 +86,16 @@ class Keyboard {
     kF12 = GLFW_KEY_F12,
   };  // enum class Key
 
+  /**
+   * @brief Handles key events.
+   *
+   * This function is called when a key event occurs. It updates the state of the keys based on the action.
+   *
+   * @param key The key that was pressed or released.
+   * @param scancode The system-specific scancode of the key.
+   * @param action The action that was performed on the key (GLFW_PRESS or GLFW_RELEASE).
+   * @param mods Bit field describing which modifier keys were held down.
+   */
   static void HandleKey(int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS) {
       keys_[key] = true;
@@ -97,14 +107,14 @@ class Keyboard {
       keys_released_[key] = true;
     }
   }
-  static bool IsKeyPressed(Key key) { return keys_[static_cast<int>(key)]; }
+  static bool IsKeyPressed(Key key)  { return keys_[static_cast<int>(key)]; }
   static bool IsKeyReleased(Key key) { return keys_released_[static_cast<int>(key)]; }
-  static bool IsKeyHeld(Key key) { return keys_held_[static_cast<int>(key)]; }
+  static bool IsKeyHeld(Key key)     { return keys_held_[static_cast<int>(key)]; }
 
  private:
-  static bool keys_[GLFW_KEY_LAST + 1];
-  static bool keys_released_[GLFW_KEY_LAST + 1];
-  static bool keys_held_[GLFW_KEY_LAST + 1];
+  static bool keys_[GLFW_KEY_LAST + 1];           //< The state of the keys.
+  static bool keys_released_[GLFW_KEY_LAST + 1];  //< The state of the keys that were released.
+  static bool keys_held_[GLFW_KEY_LAST + 1];      //< The state of the keys that are held.
 };
 
 class Mouse {
@@ -115,9 +125,28 @@ class Mouse {
     kMiddle = GLFW_MOUSE_BUTTON_MIDDLE,
   };  // enum class Button
 
+  /**
+   * @brief Handles mouse button events.
+   * @param button The button that was pressed or released.
+   * @param action The action that was performed on the button (GLFW_PRESS or GLFW_RELEASE).
+   * @param mods Bit field describing which modifier keys were held down.
+   */
   static void HandleMouseButton(int button, int action, int mods);
+
+  /**
+   * @brief Handles cursor position events.
+   * @param xpos The new x-coordinate of the cursor.
+   * @param ypos The new y-coordinate of the cursor.
+   */
   static void HandleCursorPosition(double xpos, double ypos);
+
+  /**
+   * @brief Handles scroll events.
+   * @param xoffset The scroll offset along the x-axis.
+   * @param yoffset The scroll offset along the y-axis.
+   */
   static void HandleScroll(double xoffset, double yoffset);
+
   static bool IsButtonPressed(int button) { return buttons_[button]; }
   static bool IsButtonReleased(int button) { return buttons_released_[button]; }
   static bool IsButtonHeld(int button) { return buttons_held_[button]; }
@@ -128,21 +157,24 @@ class Mouse {
   static double GetScrollX() { return scroll_x_; }
   static double GetScrollY() { return scroll_y_; }
 
+  /**
+   * @brief Resets the delta values.
+   */
   inline static void ResetDeltas() {
     dx_ = 0.0;
     dy_ = 0.0;
   }
 
  private:
-  static bool buttons_[GLFW_MOUSE_BUTTON_LAST + 1];
-  static bool buttons_released_[GLFW_MOUSE_BUTTON_LAST + 1];
-  static bool buttons_held_[GLFW_MOUSE_BUTTON_LAST + 1];
-  static double x_;
-  static double y_;
-  static double dx_;
-  static double dy_;
-  static double scroll_x_;
-  static double scroll_y_;
+  static bool buttons_[GLFW_MOUSE_BUTTON_LAST + 1];           //< The state of the buttons.
+  static bool buttons_released_[GLFW_MOUSE_BUTTON_LAST + 1];  //< The state of the buttons that were released.
+  static bool buttons_held_[GLFW_MOUSE_BUTTON_LAST + 1];      //< The state of the buttons that are held.
+  static double x_;         //< The x-coordinate of the cursor.
+  static double y_;         //< The y-coordinate of the cursor.
+  static double dx_;        //< The change in the x-coordinate of the cursor.
+  static double dy_;        //< The change in the y-coordinate of the cursor.
+  static double scroll_x_;  //< The scroll offset along the x-axis.
+  static double scroll_y_;  //< The scroll offset along the y-axis.
 };
 
 }  // namespace heh
