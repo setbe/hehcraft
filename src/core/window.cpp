@@ -84,7 +84,7 @@ void Window::InitWindow() {
     throw std::runtime_error("Failed to initialize GLAD");
   }
 
-  //glfwSwapInterval(0); // Disable VSync
+  glfwSwapInterval(0); // Disable VSync
   glViewport(0, 0, width_, height_);
   glEnable(GL_DEPTH_TEST);
   //glEnable(GL_CULL_FACE);
@@ -179,6 +179,9 @@ void Window::Run() {
 
   glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
+  glm::mat4 model = glm::mat4(1.0f);
+  glm::mat4 model2 = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+
   shader.Use();
   shader.SetInt("texture_diffuse1", 0);
 
@@ -202,17 +205,13 @@ void Window::Run() {
     shader.SetVec3("dirLightDirection", glm::vec3(1.2f, 2.0f, 1.3f));
     shader.SetVec3("dirLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    glm::mat4 model = glm::mat4(1.0f);
     shader.SetMat4("model", model);
 
     glBindTextureUnit(0, cobblestone.GetID());
 
     vertex_array.Bind();
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
-    shader.SetMat4("model", model);
+    shader.SetMat4("model", model2);
 
     glBindTextureUnit(0, grass.GetID());
 
