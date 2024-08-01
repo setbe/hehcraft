@@ -14,4 +14,7 @@ std::string GrassTexture::GetFullPath(Face face, const std::string &tex_name) co
   }
 }
 
+std::string CobblestoneTexture::GetFullPath(Face face, const std::string &tex_name) const {
+  return GetBasePath(tex_name) + "side.png";
+}
 } // namespace heh

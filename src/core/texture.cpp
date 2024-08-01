@@ -11,21 +11,22 @@
 namespace heh {
 
 Texture::Texture(Face face, const std::string &full_path) {
-  glGenTextures(1, &id_);
+  glCreateTextures(GL_TEXTURE_2D, 1, &id_);
   int width, height, nr_channels;
   stbi_set_flip_vertically_on_load(true);
   unsigned char* data = stbi_load(full_path.c_str(), &width, &height, &nr_channels, 0);
   if (!data)
     throw std::runtime_error("Failed to load texture: " + full_path);
 
-  Bind();
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTextureParameteri(id_, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTextureParameteri(id_, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTextureParameteri(id_, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+  glTextureParameteri(id_, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  glTextureStorage2D(id_, 1, GL_RGBA8, width, height);
+  glTextureSubImage2D(id_, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+  glGenerateTextureMipmap(id_);
+
   stbi_image_free(data);
 }
 

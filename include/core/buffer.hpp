@@ -11,7 +11,7 @@
  * @brief Represents a buffer object in OpenGL.
  *
  * The Buffer class provides a convenient interface for managing buffer objects in OpenGL.
- * It encapsulates the creation, binding, and deletion of buffer objects, as well as setting
+ * It encapsulates the creation and deletion of buffer objects, as well as setting
  * and updating buffer data.
  */
 class Buffer {
@@ -21,9 +21,9 @@ class Buffer {
    * @brief Constructs a Buffer object with the specified target.
    * @param target The target of the buffer object.
    *
-   * This constructor creates a buffer object with the specified target using glGenBuffers.
+   * This constructor creates a buffer object with the specified target using glCreateBuffers.
    */
-  Buffer(GLenum target) : target_(target) { glGenBuffers(1, &id_); }
+  Buffer(GLenum target) : target_(target) { glCreateBuffers(1, &id_); }
 
   /**
    * @brief Destructor.
@@ -36,29 +36,15 @@ class Buffer {
   Buffer& operator=(const Buffer&) = delete;
 
   /**
-   * @brief Binds the buffer object.
-   *
-   * This function binds the buffer object to the specified target using glBindBuffer.
-   */
-  inline void Bind() const { glBindBuffer(target_, id_); }
-
-  /**
-   * @brief Unbinds the buffer object.
-   *
-   * This function unbinds the buffer object by binding the target to 0 using glBindBuffer.
-   */
-  inline void Unbind() const { glBindBuffer(target_, 0); }
-
-  /**
    * @brief Sets the data of the buffer object.
    * @param size The size of the data in bytes.
    * @param data A pointer to the data.
    * @param usage The usage pattern of the data.
    *
-   * This function sets the data of the buffer object using glBufferData.
+   * This function sets the data of the buffer object using glNamedBufferData.
    */
   inline void SetData(GLsizeiptr size, const void* data, GLenum usage) {
-    glBufferData(target_, size, data, usage);
+    glNamedBufferData(id_, size, data, usage);
   }
 
   /**
@@ -67,10 +53,10 @@ class Buffer {
    * @param size The size of the data in bytes.
    * @param data A pointer to the data.
    *
-   * This function updates a portion of the buffer object's data using glBufferSubData.
+   * This function updates a portion of the buffer object's data using glNamedBufferSubData.
    */
   inline void SetSubData(GLintptr offset, GLsizeiptr size, const void* data) {
-    glBufferSubData(target_, offset, size, data);
+    glNamedBufferSubData(id_, offset, size, data);
   }
 
   /**
@@ -98,17 +84,24 @@ class Buffer {
  */
 class VertexArray {
  public:
-  // glGenVertexArrays(1, &id_)
-  VertexArray() { glGenVertexArrays(1, &id_); }
+  // glCreateVertexArrays(1, &id_)
+  VertexArray() { glCreateVertexArrays(1, &id_); }
   ~VertexArray() { glDeleteVertexArrays(1, &id_); }
 
   VertexArray(const VertexArray&) = delete;
   VertexArray& operator=(const VertexArray&) = delete;
 
-  inline void VertexAttribPointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer) {
-    glVertexAttribPointer(index, size, type, normalized, stride, pointer);
+  inline void EnableVertexAttrib(GLuint index) { glEnableVertexArrayAttrib(id_, index); }
+  inline void VertexAttribFormat(GLuint index, GLint size, GLenum type, GLboolean normalized, GLuint relative_offset) {
+    glVertexArrayAttribFormat(id_, index, size, type, normalized, relative_offset);
   }
-  inline void EnableVertexAttribArray(GLuint index) { glEnableVertexAttribArray(index); }
+  inline void VertexAttribBinding(GLuint attribindex, GLuint bindingindex) {
+    glVertexArrayAttribBinding(id_, attribindex, bindingindex);
+  }
+  inline void VertexBuffer(GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride) {
+    glVertexArrayVertexBuffer(id_, bindingindex, buffer, offset, stride);
+  }
+  inline void ElementBuffer(GLuint buffer) { glVertexArrayElementBuffer(id_, buffer); }
 
   inline void Bind() const { glBindVertexArray(id_); }
   inline void Unbind() const { glBindVertexArray(0); }

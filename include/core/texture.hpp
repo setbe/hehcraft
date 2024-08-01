@@ -51,20 +51,6 @@ class Texture {
 
   Texture(const Texture&) = delete;
   Texture& operator=(const Texture&) = delete;
-  
-  /**
-   * @brief Binds the texture object.
-   *
-   * This function binds the texture object using glBindTexture.
-   */
-  void Bind() const { glBindTexture(GL_TEXTURE_2D, id_); }
-
-  /**
-   * @brief Unbinds the texture object.
-   *
-   * This function unbinds the texture object by binding 0 using glBindTexture.
-   */
-  void Unbind() const { glBindTexture(GL_TEXTURE_2D, 0); }
 
   /**
    * @brief Gets the base path of the texture.

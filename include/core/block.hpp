@@ -71,4 +71,17 @@ class GrassTexture : public Texture {
   std::string GetFullPath(Face face, const std::string &tex_name) const override;
 };
 
+class CobblestoneTexture : public Texture {
+ public:
+  CobblestoneTexture(Face face = Face::kFront, const std::string &tex_name = "cobblestone")
+    : Texture(face, GetFullPath(face, tex_name)) {}
+
+  ~CobblestoneTexture() {}
+
+  CobblestoneTexture(const CobblestoneTexture&) = delete;
+  CobblestoneTexture& operator=(const CobblestoneTexture&) = delete;
+
+  std::string GetFullPath(Face face, const std::string &tex_name) const override;
+}; // class CobblestoneTexture
+
 }  // namespace heh

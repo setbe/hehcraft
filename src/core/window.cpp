@@ -159,33 +159,33 @@ void Window::Run() {
   Buffer element_buffer(GL_ELEMENT_ARRAY_BUFFER);
   Buffer vertex_buffer(GL_ARRAY_BUFFER);
   VertexArray vertex_array;
-  vertex_array.Bind();  // VAO
-
-  vertex_buffer.Bind(); // VBO
+  
   vertex_buffer.SetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  element_buffer.Bind(); // EBO
   element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
 
-  // Position attribute
-  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-  vertex_array.EnableVertexAttribArray(0);
+  vertex_array.EnableVertexAttrib(0);
+  vertex_array.VertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
+  vertex_array.VertexAttribBinding(0, 0);
+  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
 
-  // Texture attribute
-  vertex_array.VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-  vertex_array.EnableVertexAttribArray(1);
+  vertex_array.EnableVertexAttrib(1);
+  vertex_array.VertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
+  vertex_array.VertexAttribBinding(1, 0);
+  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
 
-  // Normal attribute
-  vertex_array.VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-  vertex_array.EnableVertexAttribArray(2);
+  vertex_array.EnableVertexAttrib(2);
+  vertex_array.VertexAttribFormat(2, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float));
+  vertex_array.VertexAttribBinding(2, 0);
+  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
 
-  GrassTexture side(Texture::Face::kFront);
+  vertex_array.ElementBuffer(element_buffer.GetID());
+
+  CobblestoneTexture cobblestone;
+  GrassTexture grass(Texture::Face::kFront);
 
   glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
   shader.Use();
-  glActiveTexture(GL_TEXTURE0);
-  side.Bind();
   shader.SetInt("texture_diffuse1", 0);
 
   while (!glfwWindowShouldClose(window_)) {
@@ -211,16 +211,27 @@ void Window::Run() {
     shader.Use();
     glm::mat4 view = camera_.LookAt();
     glm::mat4 projection = camera_.GetProjectionMatrix();
-    glm::mat4 model = glm::mat4(1.0f);
-    shader.SetMat4("model", model);
     shader.SetMat4("view", view);
     shader.SetMat4("projection", projection);
     shader.SetVec3("lightPos", light_pos);
     shader.SetVec3("viewPos", camera_.GetPos());
-    shader.SetVec3("lightColor", glm::vec3(0.0f, 0.0f, 1.0f));
+    shader.SetVec3("lightColor", glm::vec3(0.4f, 0.4f, 0.7f));
+    shader.SetVec3("dirLightDirection", glm::vec3(1.2f, 2.0f, 1.3f));
+    shader.SetVec3("dirLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    glActiveTexture(GL_TEXTURE0);
-    side.Bind();
+    glm::mat4 model = glm::mat4(1.0f);
+    shader.SetMat4("model", model);
+
+    glBindTextureUnit(0, cobblestone.GetID());
+
+    vertex_array.Bind();
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+    model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+    shader.SetMat4("model", model);
+
+    glBindTextureUnit(0, grass.GetID());
 
     vertex_array.Bind();
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
