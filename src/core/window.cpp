@@ -12,6 +12,7 @@
 // std
 #include <stdexcept>
 #include <iostream>
+#include <vector>
 
 namespace heh {
 
@@ -28,18 +29,6 @@ void PrintOpenGLInfo() {
   std::cout << "OpenGL Version: " << version << std::endl;
   std::cout << "GLSL Version: " << glslVersion << std::endl;
   std::cout << "OpenGL Version (integer): " << major << "." << minor << std::endl;
-}
-
-void UpdateWindowTitleWithFPS(GLFWwindow* window, const std::string& baseTitle, double& lastTime, int& nbFrames) {
-  double currentTime = glfwGetTime();
-  nbFrames++;
-  if (currentTime - lastTime >= 1.0) { // If last time is more than 1 sec ago
-      std::stringstream ss;
-      ss << baseTitle << " [" << nbFrames << " FPS]";
-      glfwSetWindowTitle(window, ss.str().c_str());
-      nbFrames = 0;
-      lastTime += 1.0;
-  }
 }
 
 void InitializeGlfw() {
@@ -98,6 +87,9 @@ void Window::InitWindow() {
 
   glViewport(0, 0, width_, height_);
   glEnable(GL_DEPTH_TEST);
+  //glEnable(GL_CULL_FACE);
+  //glCullFace(GL_BACK);
+  //glFrontFace(GL_CCW);
   glfwSetWindowUserPointer(window_, this);
   glfwSetFramebufferSizeCallback(window_, Window::FramebufferResizeCallback);
   glfwSetKeyCallback(window_, Window::KeyCallback);
@@ -107,63 +99,60 @@ void Window::InitWindow() {
   PrintOpenGLInfo();
 }
 
+struct Vertex {
+    glm::vec3 Position;
+    glm::vec2 TexCoords;
+    glm::vec3 Normal;
+};
+
+Vertex vertices[] {
+    // positions          // texture coords // normals
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
+    {{0.5f, -0.5f, -0.5f},  {1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
+    {{0.5f, 0.5f, -0.5f},   {1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+    {{-0.5f, 0.5f, -0.5f},  {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
+
+    {{-0.5f, -0.5f, 0.5f},  {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+    {{0.5f, -0.5f, 0.5f},   {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
+    {{0.5f, 0.5f, 0.5f},    {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f, 0.5f, 0.5f},   {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+
+    {{-0.5f, 0.5f, 0.5f},   {1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
+    {{-0.5f, 0.5f, -0.5f},  {1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
+    {{-0.5f, -0.5f, 0.5f},  {0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
+
+    {{0.5f, 0.5f, 0.5f},    {1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f},   {1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f},  {0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.5f},   {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+
+    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
+    {{0.5f, -0.5f, -0.5f},  {1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
+    {{0.5f, -0.5f, 0.5f},   {1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
+    {{-0.5f, -0.5f, 0.5f},  {0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
+
+    {{-0.5f, 0.5f, -0.5f},  {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f, -0.5f},   {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+    {{0.5f, 0.5f, 0.5f},    {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f, 0.5f, 0.5f},   {0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+};
+
+unsigned int indices[] = {
+    0, 1, 2, 2, 3, 0,    // front face
+    4, 5, 6, 6, 7, 4,    // back face
+    8, 9, 10, 10, 11, 8, // left face
+    12, 13, 14, 14, 15, 12, // right face
+    16, 17, 18, 18, 19, 16, // bottom face
+    20, 21, 22, 22, 23, 20  // top face
+};
+
 void Window::Run() {
   double last_time_ = glfwGetTime();
   double current_time = 0.0;
-  float delta_time = 0.0f;
+  double delta_time = 0.0f;
   int nb_frames_ = 0;
-
-  glm::vec3 cube_positions[] = {
-glm::vec3( 0.0f, 0.0f, -3.0f),
-glm::vec3( 2.0f, 5.0f, -15.0f),
-glm::vec3(-1.5f, -2.2f, -2.5f),
-glm::vec3(-3.8f, -2.0f, -12.3f),
-glm::vec3( 2.4f, -0.4f, -3.5f),
-glm::vec3(-1.7f, 3.0f, -7.5f),
-glm::vec3( 1.3f, -2.0f, -2.5f),
-glm::vec3( 1.5f, 2.0f, -2.5f),
-glm::vec3( 1.5f, 0.2f, -1.5f),
-glm::vec3(-1.3f, 1.0f, -1.5f)
-};
-
-  float vertices[] = {
-    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-    0.5f, -0.5f, -0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 1.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    -0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    0.5f, -0.5f, -0.5f, 1.0f, 1.0f,
-    0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-    0.5f, -0.5f, 0.5f, 1.0f, 0.0f,
-    -0.5f, -0.5f, 0.5f, 0.0f, 0.0f,
-    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 1.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 0.0f,
-    -0.5f, 0.5f, -0.5f, 0.0f, 1.0f
-  };
+  double last_fps_update_time = 0.0;
 
   Shader shader("shaders/simple.vert", "shaders/simple.frag");
   
@@ -175,58 +164,66 @@ glm::vec3(-1.3f, 1.0f, -1.5f)
   vertex_buffer.Bind(); // VBO
   vertex_buffer.SetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  //element_buffer.Bind(); // EBO
-  //element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
+  element_buffer.Bind(); // EBO
+  element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
 
   // Position attribute
-  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
   vertex_array.EnableVertexAttribArray(0);
 
   // Texture attribute
-  vertex_array.VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+  vertex_array.VertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
   vertex_array.EnableVertexAttribArray(1);
 
-  GrassTexture grass(GrassTexture::Face::kFront);
-  GrassTexture dirt(GrassTexture::Face::kBottom);
+  // Normal attribute
+  vertex_array.VertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+  vertex_array.EnableVertexAttribArray(2);
+
+  GrassTexture side(Texture::Face::kFront);
+
+  glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
   shader.Use();
-  shader.SetInt("texture1", 0);
-  shader.SetInt("texture2", 1);
+  glActiveTexture(GL_TEXTURE0);
+  side.Bind();
+  shader.SetInt("texture_diffuse1", 0);
 
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Wireframe mode
   while (!glfwWindowShouldClose(window_)) {
     current_time = glfwGetTime();
-    delta_time = static_cast<float>(current_time - last_time_);
+    delta_time = static_cast<double>(current_time - last_time_);
     last_time_ = current_time;
+    nb_frames_++;
 
-    UpdateWindowTitleWithFPS(window_, window_name_, last_time_, nb_frames_);
+    // Update the window title every second
+    if (current_time - last_fps_update_time >= 1.0) {
+      double fps = nb_frames_ / (current_time - last_fps_update_time);
+      std::string new_title = "Hehcraft - FPS: " + std::to_string(static_cast<int>(fps));
+      glfwSetWindowTitle(window_, new_title.c_str());
+      last_fps_update_time = current_time;
+      nb_frames_ = 0;
+    }
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     camera_.Update(delta_time, show_cursor_);
 
-    glActiveTexture(GL_TEXTURE0);
-    grass.Bind();
-    glActiveTexture(GL_TEXTURE1);
-    dirt.Bind();
-    
     shader.Use();
     glm::mat4 view = camera_.LookAt();
     glm::mat4 projection = camera_.GetProjectionMatrix();
+    glm::mat4 model = glm::mat4(1.0f);
+    shader.SetMat4("model", model);
+    shader.SetMat4("view", view);
+    shader.SetMat4("projection", projection);
+    shader.SetVec3("lightPos", light_pos);
+    shader.SetVec3("viewPos", camera_.GetPos());
+    shader.SetVec3("lightColor", glm::vec3(0.0f, 0.0f, 1.0f));
 
-    for(unsigned int i = 0; i < 10; i++)
-    {
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, cube_positions[i]);
-      float angle = 20.0f * i;
-      model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-      shader.SetMat4("model", model);
-      shader.SetMat4("view", view);
-      shader.SetMat4("projection", projection);
-      glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+    glActiveTexture(GL_TEXTURE0);
+    side.Bind();
+
     vertex_array.Bind();
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window_);
     glfwPollEvents();

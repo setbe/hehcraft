@@ -57,18 +57,20 @@ class Camera {
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftControl))
       camera_speed *= 3.0f;
 
+    glm::vec3 horizontal_movement = glm::normalize(glm::vec3(front_.x, 0.0f, front_.z));
+
     if (Keyboard::IsKeyHeld(Keyboard::Key::kW))
-      pos_ += camera_speed * front_;
+      pos_ += camera_speed * horizontal_movement;
     if (Keyboard::IsKeyHeld(Keyboard::Key::kS))
-      pos_ -= camera_speed * front_;
+      pos_ -= camera_speed * horizontal_movement;
     if (Keyboard::IsKeyHeld(Keyboard::Key::kA))
       pos_ -= glm::normalize(glm::cross(front_, up_)) * camera_speed;
     if (Keyboard::IsKeyHeld(Keyboard::Key::kD))
       pos_ += glm::normalize(glm::cross(front_, up_)) * camera_speed;
     if (Keyboard::IsKeyHeld(Keyboard::Key::kSpace))
-      pos_ += camera_speed * up_;
+      pos_ += camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftShift))
-      pos_ -= camera_speed * up_;
+      pos_ -= camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
 
     const float sensitivity = 0.1f;
     yaw_ += Mouse::GetDX() * sensitivity;
