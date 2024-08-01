@@ -54,15 +54,16 @@ Window::Window(int width, int height, const std::string &window_name)
     height_{height}, 
     window_name_{window_name}, 
     window_{nullptr}, 
-
-    camera_(glm::vec3(0.0f, 0.0f, 3.0f), 
+    camera_(
+        camera_data_, 
+        glm::vec3(0.0f, 0.0f, 3.0f), 
         -90.0f,   // yaw
         0.0f,     // pitch
-        70.0f,    // fov
-        (float)width_ / (float)height_,  // aspect
         0.1f,       // z_near
         100.0f)    // z_far
 {
+  camera_.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
+  camera_data_.sensitivity = 0.1f;
   InitWindow();
 }
 
@@ -74,17 +75,16 @@ void Window::InitWindow() {
   InitializeGlfw();
 
   window_ = glfwCreateWindow(width_, height_, window_name_.c_str(), nullptr, nullptr);
-  if (!window_) {
+  if (!window_)
     throw std::runtime_error("Failed to create GLFW window");
-  }
 
   glfwMakeContextCurrent(window_);
-  glfwSwapInterval(0); // Disable VSync
   if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
     glfwTerminate();
     throw std::runtime_error("Failed to initialize GLAD");
   }
 
+  //glfwSwapInterval(0); // Disable VSync
   glViewport(0, 0, width_, height_);
   glEnable(GL_DEPTH_TEST);
   //glEnable(GL_CULL_FACE);
@@ -148,12 +148,6 @@ unsigned int indices[] = {
 };
 
 void Window::Run() {
-  double last_time_ = glfwGetTime();
-  double current_time = 0.0;
-  double delta_time = 0.0f;
-  int nb_frames_ = 0;
-  double last_fps_update_time = 0.0;
-
   Shader shader("shaders/simple.vert", "shaders/simple.frag");
   
   Buffer element_buffer(GL_ELEMENT_ARRAY_BUFFER);
@@ -189,33 +183,22 @@ void Window::Run() {
   shader.SetInt("texture_diffuse1", 0);
 
   while (!glfwWindowShouldClose(window_)) {
-    current_time = glfwGetTime();
-    delta_time = static_cast<double>(current_time - last_time_);
-    last_time_ = current_time;
-    nb_frames_++;
+    CalculateDeltaTime();
+    // CalculateFPS();
 
-    // Update the window title every second
-    if (current_time - last_fps_update_time >= 1.0) {
-      double fps = nb_frames_ / (current_time - last_fps_update_time);
-      std::string new_title = "Hehcraft - FPS: " + std::to_string(static_cast<int>(fps));
-      glfwSetWindowTitle(window_, new_title.c_str());
-      last_fps_update_time = current_time;
-      nb_frames_ = 0;
-    }
+    camera_.HandleKeys();
+    camera_.LookAt();
+    camera_.ProjectionMatrix();
     
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    camera_.Update(delta_time, show_cursor_);
-
     shader.Use();
-    glm::mat4 view = camera_.LookAt();
-    glm::mat4 projection = camera_.GetProjectionMatrix();
-    shader.SetMat4("view", view);
-    shader.SetMat4("projection", projection);
+    shader.SetMat4("view", camera_data_.view);
+    shader.SetMat4("projection", camera_data_.projection);
     shader.SetVec3("lightPos", light_pos);
     shader.SetVec3("viewPos", camera_.GetPos());
-    shader.SetVec3("lightColor", glm::vec3(0.4f, 0.4f, 0.7f));
+    shader.SetVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
     shader.SetVec3("dirLightDirection", glm::vec3(1.2f, 2.0f, 1.3f));
     shader.SetVec3("dirLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -241,7 +224,7 @@ void Window::Run() {
   }
 }
 
-void Window::HandleInput() {
+void Window::HandleKeys() {  
   if (keyboard_.IsKeyPressed(Keyboard::Key::kEscape))
     glfwSetWindowShouldClose(window_, GLFW_TRUE);
 
@@ -254,8 +237,8 @@ void Window::HandleInput() {
   }
 
   if (keyboard_.IsKeyPressed(Keyboard::Key::kLeftAlt)) {
-    show_cursor_ = !show_cursor_;
-    if (show_cursor_)
+    camera_data_.show_cursor = !camera_data_.show_cursor;
+    if (camera_data_.show_cursor)
       glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     else
       glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -264,17 +247,19 @@ void Window::HandleInput() {
 
 void Window::FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int height) {
   glViewport(0, 0, width, height);
-  auto window = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfw_window));
-  window->framebuffer_resized_ = true;
-  window->width_ = width;
-  window->height_ = height;
-  window->camera_.SetAspect((float)width / (float)height);
+  auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfw_window));
+  window_ptr->framebuffer_resized_ = true;
+  window_ptr->width_ = width;
+  window_ptr->height_ = height;
+  window_ptr->camera_.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 }
 
 void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
   window_ptr->keyboard_.HandleKey(key, scancode, action, mods);
-  window_ptr->HandleInput();
+
+  // Handle key input for the camera and the window
+  window_ptr->HandleKeys();
 }
 
 void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
@@ -285,11 +270,34 @@ void Window::MouseButtonCallback(GLFWwindow* window, int button, int action, int
 void Window::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
   window_ptr->mouse_.HandleCursorPosition(xpos, ypos);
+
+  // Handle mouse input for the camera
+  window_ptr->camera_.HandleMouse();
 }
 
 void Window::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
   window_ptr->mouse_.HandleScroll(xoffset, yoffset);
+
+  // Not used yet
+}
+
+void Window::CalculateDeltaTime() {
+  current_time_ = glfwGetTime();
+  camera_data_.delta_time = static_cast<double>(current_time_ - last_time_);
+  last_time_ = current_time_;
+  nb_frames_++;
+}
+
+void Window::CalculateFPS() {
+  // Update the window title every second
+  if (current_time_ - last_fps_update_time_ >= 1.0) {
+    double fps = nb_frames_ / (current_time_ - last_fps_update_time_);
+    std::string new_title = "Hehcraft - FPS: " + std::to_string(static_cast<int>(fps));
+    glfwSetWindowTitle(window_, new_title.c_str());
+    last_fps_update_time_ = current_time_;
+    nb_frames_ = 0;
+  }
 }
 
 void Window::Cleanup() {
