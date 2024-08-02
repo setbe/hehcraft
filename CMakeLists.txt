@@ -15,14 +15,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
-set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
-set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
 
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
+if (UNIX)
+  set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
+  set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
+
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
+endif()
 
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
@@ -50,31 +53,26 @@ set(CORE_SOURCES
   src/core/glad.c
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
+  src/core/texture.cpp
 )
 
 set(SOURCE_FILES
   src/main.cpp
 )
 
-# Додайте виконуваний файл проекту
 add_executable(hehcraft
   ${SOURCE_FILES}
   ${CORE_SOURCES}
   ${CORE_SYSTEMS_SOURCES}
 )
 
-# Link libraries
-target_link_libraries(hehcraft
-  glfw
-  ${OPENGL_LIBRARIES}
-)
-
 if (WIN32)
-  target_link_libraries(hehcraft opengl32)
+  file(GLOB LIBS "${CMAKE_SOURCE_DIR}/libs/*.lib")
+  target_link_libraries(hehcraft opengl32 ${LIBS})
 endif()
 
 if (UNIX)
-  target_link_libraries(hehcraft GL X11 Xxf86vm Xrandr Xi pthread dl)
+  target_link_libraries(hehcraft ${OPENGL_LIBRARIES} glfw GL X11 Xxf86vm Xrandr Xi pthread dl)
 endif()
 
 # Get all .vert and .frag files in shaders directory
