@@ -1,13 +1,14 @@
 build
+libs
 .vscode
 
 # stb_image.h
-external/stb/*
+# external/stb/*
 
 # tinyobjloader
-external/tiny_obj_loader/*
+# external/tiny_obj_loader/*
 
 # glad, khr_platform
-external/glad/*
+# external/glad/*
 
-src/core/glad.c
+# src/core/glad.c
