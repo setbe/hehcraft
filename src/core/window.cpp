@@ -2,21 +2,20 @@
 #include "core/buffer.hpp"
 #include "core/shader.hpp"
 #include "core/block.hpp"
-
+#include "core/texture.hpp"
 
 // libs
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 // std
 #include <stdexcept>
 #include <iostream>
-#include <vector>
 
 namespace heh {
 
-void PrintOpenGLInfo() {
+static void PrintOpenGLInfo() {
   const GLubyte* renderer = glGetString(GL_RENDERER);
   const GLubyte* vendor = glGetString(GL_VENDOR);
   const GLubyte* version = glGetString(GL_VERSION);
@@ -31,7 +30,7 @@ void PrintOpenGLInfo() {
   std::cout << "OpenGL Version (integer): " << major << "." << minor << std::endl;
 }
 
-void InitializeOnce() {
+static void InitializeOnce() {
   static bool initialized = false;
 
   if (initialized)
@@ -46,8 +45,6 @@ void InitializeOnce() {
 
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-  TextureManager::LoadAllTextures();
 }
 
 Window::Window(int width, int height, const std::string &window_name)
@@ -85,6 +82,7 @@ void Window::InitWindow() {
     glfwTerminate();
     throw std::runtime_error("Failed to initialize GLAD");
   }
+  PrintOpenGLInfo();
 
   glfwSwapInterval(0); // Disable VSync
   glViewport(0, 0, width_, height_);
@@ -98,7 +96,8 @@ void Window::InitWindow() {
   glfwSetMouseButtonCallback(window_, Window::MouseButtonCallback);
   glfwSetCursorPosCallback(window_, Window::CursorPositionCallback);
   glfwSetScrollCallback(window_, Window::ScrollCallback);
-  PrintOpenGLInfo();
+
+  TextureManager::LoadAllTextures();
 }
 
 struct Vertex {
@@ -187,7 +186,7 @@ void Window::Run() {
 
   while (!glfwWindowShouldClose(window_)) {
     CalculateDeltaTime();
-    // CalculateFPS();
+    CalculateFPS();
 
     camera_.HandleKeys();
     camera_.LookAt();

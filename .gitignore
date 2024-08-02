@@ -1,6 +1,6 @@
 build
-libs
 .vscode
+.vs
 
 # stb_image.h
 # external/stb/*
