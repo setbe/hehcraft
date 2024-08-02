@@ -37,7 +37,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: true  # submodules
+        submodules: true
 
     - name: Set reusable strings
       id: strings
@@ -49,13 +49,13 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake libgl1-mesa-dev xorg-dev
+        sudo apt-get install -y cmake libgl1-mesa-dev xorg-dev libglfw3-dev
 
     - name: Install dependencies (Windows)
       if: matrix.os == 'windows-latest'
       run: |
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
-        choco install opengl -y
+        choco install glfw -y
 
     - name: Configure CMake
       run: >
