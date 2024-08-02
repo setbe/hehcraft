@@ -78,7 +78,7 @@ class Camera {
     }
   }
 
-  void HandleMouse() {
+  void HandleMousePosition(double xpos, double ypos) {
     if (data_.show_cursor)
       return; // Don't handle mouse input if the cursor is visible.
 
@@ -93,6 +93,32 @@ class Camera {
 
     view_needs_update_ = true;
   }
+
+  glm::vec3 GetRay(double xpos, double ypos, int screen_width, int screen_height) {
+    float x = (2.0f * xpos) / screen_width - 1.0f;
+    float y = 1.0f - (2.0f * ypos) / screen_height;
+    float z = 1.0f;
+
+    glm::vec3 ray_nds = glm::vec3(x, y, z);
+    glm::vec4 ray_clip = glm::vec4(ray_nds, 1.0f);
+
+    glm::vec4 ray_eye = glm::inverse(data_.projection) * ray_clip;
+    ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0);
+
+    glm::vec3 ray_wor = glm::vec3(glm::inverse(data_.view) * ray_eye);
+    ray_wor = glm::normalize(ray_wor);
+
+    return ray_wor;
+  }
+
+  bool RayIntersectsBlock(const glm::vec3 &ray, const glm::vec3 &camera_pos, const glm::vec3 &block_pos) {
+    glm::vec3 block_to_camera = camera_pos - block_pos;
+    float distance = glm::dot(block_to_camera, ray);
+    glm::vec3 point = block_pos + distance * ray;
+
+    return glm::distance(point, camera_pos) < 5.0f;
+  }
+
 
   /**
    * @brief Calculates the view matrix for the camera if it needs updating.

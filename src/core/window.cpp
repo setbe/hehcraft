@@ -31,21 +31,23 @@ void PrintOpenGLInfo() {
   std::cout << "OpenGL Version (integer): " << major << "." << minor << std::endl;
 }
 
-void InitializeGlfw() {
-  static bool glfw_initialized = false;
+void InitializeOnce() {
+  static bool initialized = false;
 
-  if (glfw_initialized)
+  if (initialized)
     return;
   if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW");
   }
-  glfw_initialized = true;
+  initialized = true;
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+  TextureManager::LoadAllTextures();
 }
 
 Window::Window(int width, int height, const std::string &window_name)
@@ -72,7 +74,7 @@ Window::~Window() {
 }
 
 void Window::InitWindow() {
-  InitializeGlfw();
+  InitializeOnce();
 
   window_ = glfwCreateWindow(width_, height_, window_name_.c_str(), nullptr, nullptr);
   if (!window_)
@@ -174,13 +176,11 @@ void Window::Run() {
 
   vertex_array.ElementBuffer(element_buffer.GetID());
 
-  CobblestoneTexture cobblestone;
-  GrassTexture grass(Texture::Face::kFront);
-
   glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
 
-  glm::mat4 model = glm::mat4(1.0f);
-  glm::mat4 model2 = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+  Block cobblestone("cobblestone");
+  Block grass("grass");
+  grass.Translate(glm::vec3(2.0f, 0.0f, 0.0f));
 
   shader.Use();
   shader.SetInt("texture_diffuse1", 0);
@@ -205,15 +205,12 @@ void Window::Run() {
     shader.SetVec3("dirLightDirection", glm::vec3(1.2f, 2.0f, 1.3f));
     shader.SetVec3("dirLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    shader.SetMat4("model", model);
-
-    glBindTextureUnit(0, cobblestone.GetID());
+    cobblestone.Draw(shader);
 
     vertex_array.Bind();
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    shader.SetMat4("model", model2);
-
-    glBindTextureUnit(0, grass.GetID());
+    
+    grass.Draw(shader);
 
     vertex_array.Bind();
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -244,6 +241,15 @@ void Window::HandleKeys() {
   }
 }
 
+void Window::HandleMouse(double xpos, double ypos) {
+  glm::vec3 ray_direction = camera_.GetRay(xpos, ypos, width_, height_);
+  glm::vec3 ray_origin = camera_.GetPos();
+
+  glm::vec3 hit_pos, hit_normal;
+
+
+}
+
 void Window::FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int height) {
   glViewport(0, 0, width, height);
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(glfw_window));
@@ -257,7 +263,7 @@ void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, 
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
   window_ptr->keyboard_.HandleKey(key, scancode, action, mods);
 
-  // Handle key input for the camera and the window
+  // Handle key input for the window
   window_ptr->HandleKeys();
 }
 
@@ -270,8 +276,9 @@ void Window::CursorPositionCallback(GLFWwindow* window, double xpos, double ypos
   auto window_ptr = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
   window_ptr->mouse_.HandleCursorPosition(xpos, ypos);
 
-  // Handle mouse input for the camera
-  window_ptr->camera_.HandleMouse();
+  // Handle mouse input for the camera and the window
+  window_ptr->camera_.HandleMousePosition(xpos, ypos);
+  window_ptr->HandleMouse(xpos, ypos);
 }
 
 void Window::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {

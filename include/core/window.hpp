@@ -65,6 +65,11 @@ class Window {
    * @brief Handles keyboard input events.
    */
   void HandleKeys();
+  
+  /**
+   * @brief Handles mouse input events.
+   */
+  void HandleMouse(double xpos, double ypos);
 
   void InitWindow();
   void Cleanup();
@@ -75,6 +80,8 @@ class Window {
 
   int width_;  /**< The width of the window.  */
   int height_; /**< The height of the window. */
+
+  // std::vector<Block*> blocks_; /**< The blocks to be rendered in the window. */
 
   std::string window_name_; /**< The name of the window. */
   GLFWwindow* window_;      /**< The GLFW window handle. */

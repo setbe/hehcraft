@@ -18,8 +18,11 @@ set(CMAKE_CXX_EXTENSIONS NO)
 set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_MINSIZEREL} -Os -s")
 set(CMAKE_C_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -s")
 
-# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Oz -s")
-# set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Oz -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -march=native -flto -funroll-loops")
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
 
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
@@ -45,8 +48,6 @@ endif()
 set(CORE_SOURCES
   src/core/window.cpp
   src/core/glad.c
-  src/core/texture.cpp
-  src/core/block.cpp
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
 )
