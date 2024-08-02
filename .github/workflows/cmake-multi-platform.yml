@@ -37,7 +37,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: true  # Включення всіх підмодулів
 
     - name: Set reusable strings
       id: strings
@@ -55,7 +55,16 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
-        choco install glfw -y
+
+    - name: Download and build GLFW (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        curl -LO https://github.com/glfw/glfw/archive/refs/tags/3.3.8.zip
+        tar -xf 3.3.8.zip
+        cd glfw-3.3.8
+        cmake -B build -DCMAKE_BUILD_TYPE=Release
+        cmake --build build --config Release
+        cmake --install build --prefix ${{ steps.strings.outputs.build-output-dir }}/glfw
 
     - name: Configure CMake
       run: >
@@ -63,6 +72,8 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DGLFW_INCLUDE_DIR=${{ steps.strings.outputs.build-output-dir }}/glfw/include
+        -DGLFW_LIBRARY=${{ steps.strings.outputs.build-output-dir }}/glfw/lib
         -S ${{ github.workspace }}
 
     - name: Build
