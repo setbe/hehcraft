@@ -27,6 +27,7 @@ if (UNIX)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Og -g3 -march=native -fno-omit-frame-pointer")
 endif()
 
+
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
 set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")

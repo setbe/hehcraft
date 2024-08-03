@@ -1,7 +1,6 @@
 #include "core/window.hpp"
 #include "core/buffer.hpp"
 #include "core/shader.hpp"
-#include "core/block.hpp"
 #include "core/texture.hpp"
 
 // libs
@@ -87,132 +86,72 @@ void Window::InitWindow() {
   glfwSwapInterval(0); // Disable VSync
   glViewport(0, 0, width_, height_);
   glEnable(GL_DEPTH_TEST);
-  //glEnable(GL_CULL_FACE);
-  //glCullFace(GL_BACK);
-  //glFrontFace(GL_CCW);
+
+  // glEnable(GL_CULL_FACE);
+  // glCullFace(GL_BACK);
+  // glFrontFace(GL_CCW);
   glfwSetWindowUserPointer(window_, this);
   glfwSetFramebufferSizeCallback(window_, Window::FramebufferResizeCallback);
   glfwSetKeyCallback(window_, Window::KeyCallback);
   glfwSetMouseButtonCallback(window_, Window::MouseButtonCallback);
   glfwSetCursorPosCallback(window_, Window::CursorPositionCallback);
   glfwSetScrollCallback(window_, Window::ScrollCallback);
-
-  TextureManager::LoadAllTextures();
 }
 
-struct Vertex {
-    glm::vec3 Position;
-    glm::vec2 TexCoords;
-    glm::vec3 Normal;
+float vertices[] = {
+  // positions        // colors         // texture coords
+  0.5f, 0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+  0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+  -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+  -0.5f, 0.5f, 0.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f // top left
 };
-
-Vertex vertices[] {
-    // positions          // texture coords // normals
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
-    {{0.5f, -0.5f, -0.5f},  {1.0f, 0.0f}, {0.0f, 0.0f, -1.0f}},
-    {{0.5f, 0.5f, -0.5f},   {1.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
-    {{-0.5f, 0.5f, -0.5f},  {0.0f, 1.0f}, {0.0f, 0.0f, -1.0f}},
-
-    {{-0.5f, -0.5f, 0.5f},  {0.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-    {{0.5f, -0.5f, 0.5f},   {1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}},
-    {{0.5f, 0.5f, 0.5f},    {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.5f},   {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-
-    {{-0.5f, 0.5f, 0.5f},   {1.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
-    {{-0.5f, 0.5f, -0.5f},  {1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}},
-    {{-0.5f, -0.5f, 0.5f},  {0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}},
-
-    {{0.5f, 0.5f, 0.5f},    {1.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f},   {1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f},  {0.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.5f},   {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-
-    {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f},  {1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.5f},   {1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
-    {{-0.5f, -0.5f, 0.5f},  {0.0f, 1.0f}, {0.0f, -1.0f, 0.0f}},
-
-    {{-0.5f, 0.5f, -0.5f},  {0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f},   {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.5f},    {1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-    {{-0.5f, 0.5f, 0.5f},   {0.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-};
-
 unsigned int indices[] = {
-    0, 1, 2, 2, 3, 0,    // front face
-    4, 5, 6, 6, 7, 4,    // back face
-    8, 9, 10, 10, 11, 8, // left face
-    12, 13, 14, 14, 15, 12, // right face
-    16, 17, 18, 18, 19, 16, // bottom face
-    20, 21, 22, 22, 23, 20  // top face
+  0, 1, 3, // first triangle
+  1, 2, 3 // second triangle
 };
 
 void Window::Run() {
   Shader shader("shaders/simple.vert", "shaders/simple.frag");
-  
+
   Buffer element_buffer(GL_ELEMENT_ARRAY_BUFFER);
   Buffer vertex_buffer(GL_ARRAY_BUFFER);
   VertexArray vertex_array;
-  
+  vertex_array.Bind();  // VAO
+
+  vertex_buffer.Bind(); // VBO
   vertex_buffer.SetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+  element_buffer.Bind(); // EBO
   element_buffer.SetData(sizeof(indices), indices, GL_STATIC_DRAW);
 
-  vertex_array.EnableVertexAttrib(0);
-  vertex_array.VertexAttribFormat(0, 3, GL_FLOAT, GL_FALSE, 0);
-  vertex_array.VertexAttribBinding(0, 0);
-  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
+  // Position attribute
+  vertex_array.VertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+  vertex_array.EnableVertexAttribArray(0);
 
-  vertex_array.EnableVertexAttrib(1);
-  vertex_array.VertexAttribFormat(1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(float));
-  vertex_array.VertexAttribBinding(1, 0);
-  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
+  // Color attribute
+  vertex_array.VertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+  vertex_array.EnableVertexAttribArray(1);
 
-  vertex_array.EnableVertexAttrib(2);
-  vertex_array.VertexAttribFormat(2, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float));
-  vertex_array.VertexAttribBinding(2, 0);
-  vertex_array.VertexBuffer(0, vertex_buffer.GetID(), 0, 8 * sizeof(float));
+  // Texture attribute
+  vertex_array.VertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+  vertex_array.EnableVertexAttribArray(2);
 
-  vertex_array.ElementBuffer(element_buffer.GetID());
-
-  glm::vec3 light_pos(1.2f, 1.0f, 2.0f);
-
-  Block cobblestone("cobblestone");
-  Block grass("grass");
-  grass.Translate(glm::vec3(2.0f, 0.0f, 0.0f));
+  Texture texture("grass", Texture::Face::kFront);
 
   shader.Use();
-  shader.SetInt("texture_diffuse1", 0);
+  shader.SetInt("uTexture1", 0);
 
   while (!glfwWindowShouldClose(window_)) {
     CalculateDeltaTime();
     CalculateFPS();
 
-    camera_.HandleKeys();
-    camera_.LookAt();
-    camera_.ProjectionMatrix();
-    
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    texture.Bind();
     shader.Use();
-    shader.SetMat4("view", camera_data_.view);
-    shader.SetMat4("projection", camera_data_.projection);
-    shader.SetVec3("lightPos", light_pos);
-    shader.SetVec3("viewPos", camera_.GetPos());
-    shader.SetVec3("lightColor", glm::vec3(1.f, 1.f, 1.f));
-    shader.SetVec3("dirLightDirection", glm::vec3(1.2f, 2.0f, 1.3f));
-    shader.SetVec3("dirLightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-
-    cobblestone.Draw(shader);
-
     vertex_array.Bind();
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    
-    grass.Draw(shader);
-
-    vertex_array.Bind();
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window_);
     glfwPollEvents();
@@ -223,7 +162,7 @@ void Window::HandleKeys() {
   if (keyboard_.IsKeyPressed(Keyboard::Key::kEscape))
     glfwSetWindowShouldClose(window_, GLFW_TRUE);
 
-  if (keyboard_.IsKeyPressed(Keyboard::Key::kF12)) {
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kF1)) {
     wireframe_mode_ = !wireframe_mode_;
     if (wireframe_mode_)
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
