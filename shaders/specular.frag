@@ -35,7 +35,12 @@ void main() {
   );
 
   // Diffuse color
-  vec3 color = texture(texture_diffuse1, adjustedTexCoords).rgb;
+  vec4 texColor = texture(texture_diffuse1, adjustedTexCoords);
+
+  if (texColor.a < 0.1)
+      discard;
+
+  vec3 color = texColor.rgb;
 
   // Ambient lighting
   vec3 ambient = 0.3 * color;
@@ -55,5 +60,5 @@ void main() {
   vec3 specular = spec * dirLightColor * specularStrength; // used dirLightColor instead of lightColor
 
   vec3 result = ambient + diffuse + specular;
-  FragColor = vec4(result, 1.0);
+  FragColor = vec4(result, texColor.a);
 }
