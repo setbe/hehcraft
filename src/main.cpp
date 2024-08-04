@@ -1,6 +1,11 @@
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+
 #include "core/window.hpp"
 
 #include <iostream>
+
 
 int main(int argc, char** argv);
 
@@ -14,6 +19,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
   return main(__argc, __argv);
 }
 #endif
+
+
+#include "utils/image_writer.hpp" 
 
 int main(int argc, char** argv) 
 {  

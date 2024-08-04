@@ -22,6 +22,12 @@ public:
   inline void SetData(GLsizeiptr size, const void* data, GLenum usage) {
     glBufferData(target_, size, data, usage);
   }
+
+  inline void BindAndSetData(GLsizeiptr size, const void* data, GLenum usage) {
+    Bind();
+    SetData(size, data, usage);
+  }
+
   inline void SetSubData(GLintptr offset, GLsizeiptr size, const void* data) {
     glBufferSubData(target_, offset, size, data);
   }

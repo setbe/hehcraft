@@ -3,8 +3,6 @@
 // libs
 #include <glad/glad.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
 #include <stb/stb_image.h>
 
 // std

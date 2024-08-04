@@ -55,6 +55,8 @@ set(CORE_SOURCES
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
   src/core/texture.cpp
+
+  src/utils/image_writer.cpp
 )
 
 set(SOURCE_FILES
