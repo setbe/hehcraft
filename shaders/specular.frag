@@ -5,7 +5,6 @@ out vec4 FragColor;
 in vec2 TexCoords;
 in vec3 Normal;
 in vec3 FragPos;
-flat in ivec2 TexIndex;
 
 uniform sampler2D texture_diffuse1;
 
@@ -16,34 +15,30 @@ uniform vec3 viewPos;
 uniform vec3 dirLightDirection;
 uniform vec3 dirLightColor;
 
-const float atlasWidth = 64.0;
-const float atlasHeight = 64.0;
-const float spriteWidth = 16.0;
-const float spriteHeight = 16.0;
-
 void main() {
-  float startX = TexIndex.x * spriteWidth;
-  float startY = TexIndex.y * spriteHeight;
-  float uMin = startX / atlasWidth;
-  float vMin = startY / atlasHeight;
-  float uMax = (startX + spriteWidth) / atlasWidth;
-  float vMax = (startY + spriteHeight) / atlasHeight;
-  
-  vec2 adjustedTexCoords = vec2(
-    mix(uMin, uMax, TexCoords.x),
-    mix(vMin, vMax, TexCoords.y)
-  );
-
   // Diffuse color
-  vec4 texColor = texture(texture_diffuse1, adjustedTexCoords);
-
-  if (texColor.a < 0.1)
-      discard;
+  vec4 texColor = texture(texture_diffuse1, TexCoords);
 
   vec3 color = texColor.rgb;
 
+  // Simplified Ambient Occlusion (based on face direction)
+  float ao = 1.0;
+  if (Normal.z > 0.5) { // Front face
+      ao = 0.6;
+  } else if (Normal.z < -0.5) { // Back face
+      ao = 0.4;
+  } else if (Normal.x > 0.5) { // Right face
+      ao = 0.5;
+  } else if (Normal.x < -0.5) { // Left face
+      ao = 0.5;
+  } else if (Normal.y > 0.5) { // Top face
+      ao = 0.8;
+  } else if (Normal.y < -0.5) { // Bottom face
+      ao = 0.3;
+  }
+
   // Ambient lighting
-  vec3 ambient = 0.3 * color;
+  vec3 ambient = 0.3 * color * ao;
 
   // Diffuse lighting
   vec3 norm = normalize(Normal);
@@ -56,9 +51,10 @@ void main() {
   vec3 reflectDir = reflect(-lightDir, norm);
   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
   
-  float specularStrength = 0.5; // Specular strength can be adjusted
+  float specularStrength = 0.15; // Specular strength can be adjusted
   vec3 specular = spec * dirLightColor * specularStrength; // used dirLightColor instead of lightColor
 
   vec3 result = ambient + diffuse + specular;
   FragColor = vec4(result, texColor.a);
+
 }

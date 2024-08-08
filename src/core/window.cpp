@@ -1,7 +1,8 @@
-#include "core/window.hpp"
+﻿#include "core/window.hpp"
 #include "core/buffer.hpp"
 #include "core/shader.hpp"
-#include "core/texture.hpp"
+
+#include "world/chunk.hpp"
 
 #include "utils/image_writer.hpp"
 
@@ -63,7 +64,7 @@ Window::Window(int width, int height, const std::string &window_name)
         -90.0f,   // yaw
         0.0f,     // pitch
         0.1f,       // z_near
-        100.0f)    // z_far
+        1000.0f)    // z_far
 {
   camera_.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
   camera_data_.sensitivity = 0.1f;
@@ -95,9 +96,9 @@ void Window::InitWindow() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-  // glEnable(GL_CULL_FACE);
-  // glCullFace(GL_BACK);
-  // glFrontFace(GL_CCW);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glFrontFace(GL_CCW);
 
   glfwSetWindowUserPointer(window_, this);
   glfwSetFramebufferSizeCallback(window_, Window::FramebufferResizeCallback);
@@ -107,77 +108,18 @@ void Window::InitWindow() {
   glfwSetScrollCallback(window_, Window::ScrollCallback);
 }
 
-constexpr const float kAtlasWidth = 64.0f;
-constexpr const float kAtlasHeight = 64.0f;
-constexpr const float kTextureWidth = 16.0f;
-constexpr const float kTextureHeight = 16.0f;
-
-constexpr const int kTextureColumn = 0;
-constexpr const int kTextureRow = 1;
-
-constexpr const float kStartX = kTextureColumn * kTextureWidth;
-constexpr const float kStartY = kTextureRow * kTextureHeight;
-
-constexpr const float kMinU = kStartX / kAtlasWidth;
-constexpr const float kMinV = kStartY / kAtlasHeight;
-constexpr const float kMaxU = (kStartX + kTextureWidth) / kAtlasWidth;
-constexpr const float kMaxV = (kStartY + kTextureHeight) / kAtlasHeight;
-
-struct Vertex {
-  float position[3];
-  float tex_coords[2];
-  float normal[3];
-  int   tex_index[2];
-};
-
-std::vector<Vertex> generateVertices(int row, int col) {
-  std::vector<Vertex> vertices = {
-    // positions            // texture coords // normals           // texture indices
-    {{ 0.5f,  0.5f, 0.0f},  {1.0f, 1.0f},     {0.0f, 0.0f, 1.0f},  {col, row}},
-    {{ 0.5f, -0.5f, 0.0f},  {1.0f, 0.0f},     {0.0f, 0.0f, 1.0f},  {col, row}},
-    {{-0.5f, -0.5f, 0.0f},  {0.0f, 0.0f},     {0.0f, 0.0f, 1.0f},  {col, row}},
-    {{-0.5f,  0.5f, 0.0f},  {0.0f, 1.0f},     {0.0f, 0.0f, 1.0f},  {col, row}}
-  };
-
-  return vertices;
-}
-
-unsigned int indices[] = {
-    0, 1, 3,
-    1, 2, 3
-};
-
 void Window::Run() {
-  heh::ImageWriter image_writer;
+  ImageWriter image_writer;
   image_writer.CreateAtlas("textures", "atlas.png");
+  assert(image_writer.GetAtlasSize() == kAtlasSize && "kAtlasSize must be updated");
+
+  Chunk chunk;
+  chunk.Generate();
+  chunk.UploadToGpu();
+  chunk.ClearCpuData();
 
   Shader shader("shaders/specular.vert", "shaders/specular.frag");
-
-  Buffer element_buffer(GL_ELEMENT_ARRAY_BUFFER);
-  Buffer vertex_buffer(GL_ARRAY_BUFFER);
-  VertexArray vertex_array;
-
-
-  //vertex_array.Bind();  // VAO begin
-  //{
-  //  // VBO
-  //  vertex_buffer.BindAndSetData(sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  //  // EBO
-  //  element_buffer.BindAndSetData(sizeof(indices), indices, GL_STATIC_DRAW);
-
-  //  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-  //  glEnableVertexAttribArray(0);
-
-  //  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-  //  glEnableVertexAttribArray(1);
-
-  //  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
-  //  glEnableVertexAttribArray(2);
-  //}
-  //vertex_array.Unbind(); // VAO end
-
-
+  
   shader.Use();
   shader.SetInt("texture1", 0);
 
@@ -189,58 +131,32 @@ void Window::Run() {
     camera_.ProjectionMatrix();
     camera_.HandleKeys();
 
-    glClearColor(0.2f, 0.3f, 0.3f, 0.0f);
+    if (dark_background_mode_)
+      glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+    else
+      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shader.Use();
     shader.SetMat4("view", camera_data_.view);
     shader.SetMat4("projection", camera_data_.projection);
     shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.SetVec3("lightPos", glm::vec3(4.2f, 3.0f, 2.0f));
+    shader.SetVec3("lightPos", glm::vec3(4.2f, 300.0f, 2.0f));
     shader.SetVec3("viewPos", camera_.GetPos());
 
-    shader.SetVec3("dirLightDirection", glm::vec3(0.0f, 0.0f, 0.3f));
-    shader.SetVec3("dirLightColor", glm::vec3(0.8f, 0.8f, 0.8f));
+    shader.SetVec3("dirLightDirection", glm::vec3(-0.2f, 0.7f, 0.6f));
+    shader.SetVec3("dirLightColor", glm::vec3(1.0f, 0.95f, 0.85f));
+
+    glm::mat4 model = glm::mat4(1.0f);
+    shader.SetMat4("model", model);
 
     image_writer.BindAtlas();
 
-    for (int row = 0; row < 4; ++row) {
-      for (int col = 0; col < 4; ++col) {
+    chunk.Render();
+    //vao.Bind();
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(col * 1.5f, row * 1.5f, 0.0f));
-        shader.SetMat4("model", model);
-        
-        std::vector<Vertex> vertices = generateVertices(row, col);
-       
-        vertex_array.Bind();
-
-        // VBO
-        vertex_buffer.BindAndSetData(vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-
-        // EBO
-        element_buffer.BindAndSetData(sizeof(indices), indices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, tex_coords)));
-        glEnableVertexAttribArray(1);
-
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(offsetof(Vertex, normal)));
-        glEnableVertexAttribArray(2);
-
-        glVertexAttribIPointer(3, 2, GL_INT, sizeof(Vertex), (void*)(offsetof(Vertex, tex_index)));
-        glEnableVertexAttribArray(3);
-
-       
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-      }
-    }
-
-    vertex_array.Unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
-    
 
     glfwSwapBuffers(window_);
     glfwPollEvents();
@@ -258,6 +174,9 @@ void Window::HandleKeys() {
     else
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
+
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kF2))
+    dark_background_mode_ = !dark_background_mode_;
 
   if (keyboard_.IsKeyPressed(Keyboard::Key::kLeftAlt)) {
     camera_data_.show_cursor = !camera_data_.show_cursor;

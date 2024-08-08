@@ -54,7 +54,9 @@ set(CORE_SOURCES
   src/core/glad.c
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
-  src/core/texture.cpp
+
+  src/world/world.cpp
+  src/world/chunk.cpp
 
   src/utils/image_writer.cpp
 )

@@ -21,7 +21,7 @@ namespace heh {
 
   class ImageWriter {
   public:
-    ImageWriter() : atlas_texture_id_(0), out_width_(0), out_height_(0) {}
+    ImageWriter() : atlas_texture_id_(0), out_size_(0) {}
 
     ~ImageWriter() {
       glDeleteTextures(1, &atlas_texture_id_);
@@ -33,14 +33,13 @@ namespace heh {
       glBindTexture(GL_TEXTURE_2D, atlas_texture_id_);
     }
 
-    uint32_t GetAtlasSize() const {
-      return out_width_;
+    uint16_t GetAtlasSize() const {
+      return out_size_;
     }
 
   private:
     GLuint atlas_texture_id_;
-    uint32_t out_width_;
-    uint32_t out_height_;
+    uint16_t out_size_;
 
     void GenerateGLTexture(const std::vector<Pixel>& pixels_list);
   };
