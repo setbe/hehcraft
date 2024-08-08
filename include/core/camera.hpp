@@ -19,7 +19,7 @@ class Camera {
   float delta_time{0.0f};     ///< The time elapsed since the last update.
   float sensitivity{1.0f};    ///< The sensitivity of the camera.
   float aspect_ratio{1.0f};   ///< The aspect ratio of the camera.
-  float fov{45.0f};           ///< The field of view of the camera.
+  float fov{80.0f};           ///< The field of view of the camera.
   glm::mat4 view{1.0f};       ///< The view matrix of the camera.
   glm::mat4 projection{1.0f}; ///< The projection matrix of the camera.
  };
@@ -45,10 +45,10 @@ class Camera {
    * @brief Updates the camera's position and orientation based on user input.
    */
   void HandleKeys() {
-    float camera_speed = 2.5f * data_.delta_time;
+    float camera_speed = 5.0f * data_.delta_time;
     
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftControl))
-      camera_speed *= 3.0f;
+      camera_speed *= 4.0f;
 
     glm::vec3 horizontal_movement = glm::normalize(glm::vec3(front_.x, 0.0f, front_.z));
 

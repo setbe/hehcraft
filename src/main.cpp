@@ -1,6 +1,11 @@
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_ONLY_PNG
+
 #include "core/window.hpp"
 
 #include <iostream>
+
 
 int main(int argc, char** argv);
 
@@ -15,10 +20,17 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 }
 #endif
 
+
+#include "utils/image_writer.hpp" 
+
 int main(int argc, char** argv) 
 {  
   try {
-    heh::Window window(800, 600, "Hello, World!");
+    int width = heh::config::file.window.width;
+    int height = heh::config::file.window.height;
+    std::string window_name = heh::config::file.window.window_name;
+
+    heh::Window window(width, height, window_name);
     window.Run();
   } catch (const std::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;

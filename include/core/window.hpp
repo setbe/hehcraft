@@ -3,6 +3,8 @@
 #include "core/camera.hpp"
 #include "core/keys_n_mouse.hpp"
 
+#include "utils/toml_extended.hpp"
+
 // libs
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -93,6 +95,7 @@ class Window {
 
   bool framebuffer_resized_ = false; /**< Flag indicating if the window was resized.    */
   bool wireframe_mode_ = false;      /**< Flag indicating if wireframe mode is enabled. */
+  bool dark_background_mode_ = false; /**< Flag indicating if dark background mode is enabled. */
 
   double last_time_ = 0.0;
   double current_time_ = 0.0;
