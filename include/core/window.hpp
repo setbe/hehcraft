@@ -3,6 +3,8 @@
 #include "core/camera.hpp"
 #include "core/keys_n_mouse.hpp"
 
+#include "utils/toml_extended.hpp"
+
 // libs
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

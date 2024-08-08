@@ -54,22 +54,52 @@ set(CORE_SOURCES
   src/core/glad.c
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
+)
 
+set(WORLD_SOURCES
   src/world/world.cpp
   src/world/chunk.cpp
+  src/world/block.cpp
+)
 
+set(UTILS_SOURCES
   src/utils/image_writer.cpp
+  src/utils/toml_extended.cpp
 )
 
 set(SOURCE_FILES
   src/main.cpp
 )
 
+set(HEADER_FILES
+  include/core/window.hpp
+  include/core/buffer.hpp
+  include/core/camera.hpp
+  include/core/keys_n_mouse.hpp
+  include/core/shader.hpp
+
+  include/world/world.hpp
+  include/world/chunk.hpp
+  include/world/block.hpp
+
+  include/utils/image_writer.hpp
+  include/utils/toml_extended.hpp
+)
+
 add_executable(hehcraft
   ${SOURCE_FILES}
   ${CORE_SOURCES}
-  ${CORE_SYSTEMS_SOURCES}
+  ${WORLD_SOURCES}
+  ${UTILS_SOURCES}
+
+  ${HEADER_FILES}
 )
+
+# Source groups for Visual Studio filters
+source_group("Source Files\\Core" FILES ${CORE_SOURCES})
+source_group("Source Files\\World" FILES ${WORLD_SOURCES})
+source_group("Source Files\\Utils" FILES ${UTILS_SOURCES})
+source_group("Header Files" FILES ${HEADER_FILES})
 
 if (WIN32)
   file(GLOB LIBS "${CMAKE_SOURCE_DIR}/libs/*.lib")
@@ -85,6 +115,8 @@ file(GLOB_RECURSE GLSL_SOURCE_FILES
   "${CMAKE_SOURCE_DIR}/shaders/*.frag"
   "${CMAKE_SOURCE_DIR}/shaders/*.vert"
 )
+
+source_group("Assets\\Shaders" FILES ${GLSL_SOURCE_FILES})
 
 # Get all texture files in textures directory
 file(GLOB_RECURSE TEXTURE_FILES

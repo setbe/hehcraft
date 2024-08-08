@@ -12,6 +12,7 @@
 #include <memory>
 
 
+
 namespace heh {
 
   constexpr const uint16_t kAtlasSize = 64;
