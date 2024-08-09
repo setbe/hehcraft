@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/toml_extended.hpp"
+
 // libs
 #include <stb/stb_image_write.h>
 #include <stb/stb_image.h>
@@ -17,6 +19,11 @@ namespace heh {
 
   struct Pixel {
     unsigned char r, g, b, a;
+  };
+
+  struct ImageLocation {
+    int x, y, width, height;
+    std::string name;
   };
 
   class ImageWriter {

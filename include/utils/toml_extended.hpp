@@ -24,9 +24,10 @@ namespace heh {
     };
 
     struct BlockConfig {
-      std::string side_texture;
-      std::string top_texture;
-      std::string bottom_texture;
+      uint32_t id;
+      std::string side;
+      std::string top;
+      std::string bottom;
     };
 
     struct TextureConfig {
@@ -46,8 +47,14 @@ namespace heh {
     extern std::string blocks_file_path;
     extern std::string textures_file_path;
 
-    Config LoadConfig();
+    void InitConfigFile(
+      const std::string& main_config, 
+      const std::string& blocks_config, 
+      const std::string& textures_config);
+
     void SaveMainConfig();
+    void SaveBlocksConfig();
+    void SaveTexturesConfig();
 
     void CreateDefaultMainConfig();
     void CreateDefaultBlocksConfig();
