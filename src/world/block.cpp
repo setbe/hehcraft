@@ -13,6 +13,8 @@ namespace heh {
 
     void LoadBlocks()
     {
+
+      block_formats.push_back({"", "", "", true}); // Null block
       for (const auto& block_config : config::file.blocks)
       {
         // block_config.first = name of the block
@@ -37,6 +39,15 @@ namespace heh {
         }
         texture_formats[texture.name] = texture;
       }
+    }
+    const BlockFormat& GetBlock(const std::string& name)
+    {
+      return block_formats[config::file.blocks[name].id];
+    }
+
+    const BlockFormat& GetBlock(int id)
+    {
+      return block_formats[id];
     }
   } // namespace block_map
 

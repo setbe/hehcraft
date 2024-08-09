@@ -9,7 +9,27 @@
 #include <random>
 
 namespace heh {
+  static int To1DArrayIndex(int x, int y, int z)
+  {
+    int index = x * (kChunkDepth * kChunkHeight) + (y + kChunkHeight * z);
+    return index > kChunkWidth * kChunkHeight * kChunkDepth || index < 0 ?
+      block_map::kNullBlock :
+      index;
+  }
 
+  template<typename T, uint8_t N_Vec, uint8_t N = 4>
+  struct VecOrder
+  {
+    std::array<glm::vec<N_Vec, T>, N> vec;
+    std::array<uint8_t, N> order;
+  };
+
+  static void LoadBlock(
+    Vertex* vert_data,
+    const VecOrder<float, 3, 8>& verts,
+    const VecOrder<float, 2, 4>& uv,
+    const glm::vec3& normal,
+    int vertex_cursor);
   
 
   void Chunk::Generate()
@@ -19,7 +39,9 @@ namespace heh {
     data->elements.resize(kChunkWidth * kChunkHeight * kChunkDepth * 36);
     blocks_data.resize(kChunkWidth * kChunkHeight * kChunkDepth);
 
-    
+    int vertex_cursor = 0;
+    int element_cursor = 0;
+    int element_index_cursor = 0;
 
     for (int i = 0; i < kChunkWidth * kChunkHeight * kChunkDepth; ++i)
     {
@@ -32,38 +54,40 @@ namespace heh {
       {
         for (int y = 0; y < kChunkHeight; ++y)
         {
-          const int array_expansion = (x * (kChunkDepth * kChunkHeight) + (y + kChunkHeight * z));
+          const int array_expansion = To1DArrayIndex(x, y, z);
 
 
           // data->elements
-          const uint32_t element_index = array_expansion * 36;
-          const uint32_t element_offset = array_expansion * 24;
-          if (element_offset >= std::numeric_limits<uint32_t>::max() - 24)
+          //const uint32_t element_index = array_expansion * 36;
+          //const uint32_t element_offset = array_expansion * 24;
+          if (element_cursor >= std::numeric_limits<uint32_t>::max() - 24)
             printf("Chunk Overflow\n");
 
           // 0 1 2
           // 0 2 3
           for (int i = 0; i < 6; ++i)
           {
-            data->elements[element_index + (i * 6) + 0] = element_offset + 0 + (i * 4);
-            data->elements[element_index + (i * 6) + 1] = element_offset + 1 + (i * 4);
-            data->elements[element_index + (i * 6) + 2] = element_offset + 2 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 0] = element_cursor + 0 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 1] = element_cursor + 1 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 2] = element_cursor + 2 + (i * 4);
 
-            data->elements[element_index + (i * 6) + 3] = element_offset + 0 + (i * 4);
-            data->elements[element_index + (i * 6) + 4] = element_offset + 2 + (i * 4);
-            data->elements[element_index + (i * 6) + 5] = element_offset + 3 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 3] = element_cursor + 0 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 4] = element_cursor + 2 + (i * 4);
+            data->elements[element_index_cursor + (i * 6) + 5] = element_cursor + 3 + (i * 4);
           }
+
+          element_cursor += 4 * 6;
+          element_index_cursor += 36;
 
 
           // tex_coords
 
 
-          const int vertex_offset = array_expansion * 24;
-          const int tex_coords_index = array_expansion * 24;
+          //const int vertex_cursor = array_expansion * 24;
+          //const int tex_coords_index = array_expansion * 24;
 
 
-          const std::string& name = block_map::id_to_name[blocks_data[array_expansion]];
-          const BlockFormat& block = block_map::block_formats[blocks_data[array_expansion] - 1];
+          const BlockFormat& block = block_map::GetBlock(blocks_data[array_expansion]);
 
           const TextureFormat& tex_top = block_map::texture_formats[block.top];
           const TextureFormat& tex_side = block_map::texture_formats[block.side];
@@ -71,60 +95,92 @@ namespace heh {
 
           // verts begin
 
-          // position
-          std::array<Vertex, 8> verts;
-          verts[0].position = glm::vec3(
+          //
+          std::array<glm::vec3, 8> verts;
+          verts[0] = glm::vec3(
             (float)x - 0.5f,
             (float)y + 0.5f,
             (float)z + 0.5f
           );
-          verts[1].position = verts[0].position + glm::vec3(1.f, 0.f, 0.f);
-          verts[2].position = verts[1].position - glm::vec3(0.f, 0.f, 1.f);
-          verts[3].position = verts[0].position - glm::vec3(0.f, 0.f, 1.f);
+          verts[1] = verts[0] + glm::vec3(1.f, 0.f, 0.f);
+          verts[2] = verts[1] - glm::vec3(0.f, 0.f, 1.f);
+          verts[3] = verts[0] - glm::vec3(0.f, 0.f, 1.f);
 
-          verts[4].position = verts[0].position - glm::vec3(0.f, 1.f, 0.f);
-          verts[5].position = verts[1].position - glm::vec3(0.f, 1.f, 0.f);
-          verts[6].position = verts[2].position - glm::vec3(0.f, 1.f, 0.f);
-          verts[7].position = verts[3].position - glm::vec3(0.f, 1.f, 0.f);
-
+          verts[4] = verts[0] - glm::vec3(0.f, 1.f, 0.f);
+          verts[5] = verts[1] - glm::vec3(0.f, 1.f, 0.f);
+          verts[6] = verts[2] - glm::vec3(0.f, 1.f, 0.f);
+          verts[7] = verts[3] - glm::vec3(0.f, 1.f, 0.f);
 
           // verts end
-          
+
+
           // Top face
-          data->vertices[vertex_offset + 0] = { verts[0].position, tex_top.uvs[0], glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 1] = { verts[1].position, tex_top.uvs[1], glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 2] = { verts[2].position, tex_top.uvs[2], glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 3] = { verts[3].position, tex_top.uvs[3], glm::vec3(0.f, 1.f, 0.f) };
+          /*const int top_index = To1DArrayIndex(x, y + 1, z);
+          const BlockFormat& top_block = block_map::block_formats[blocks_data[top_index]];
+          if (!top_index || top_block.is_transparent)
+          {*/
+          using VertsOrder = VecOrder<float, 3, 8>;
+          using UvOrder = VecOrder<float, 2, 4>;
+
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 0, 1, 2, 3 }},
+            UvOrder{tex_top.uvs, { 0, 1, 2, 3 }},
+            { 0.f, 1.f, 0.f },
+            vertex_cursor
+           );
+          vertex_cursor += 4;
+          //}
 
           // Right face
-          data->vertices[vertex_offset + 4] = { verts[0].position, tex_side.uvs[0], glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 5] = { verts[4].position, tex_side.uvs[1], glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 6] = { verts[5].position, tex_side.uvs[2], glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 7] = { verts[1].position, tex_side.uvs[3], glm::vec3(1.f, 0.f, 0.f) };
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 0, 4, 5, 1 }},
+            UvOrder{tex_side.uvs, { 0, 1, 2, 3 }},
+            { 1.f, 0.f, 0.f },
+            vertex_cursor
+          );
+          vertex_cursor += 4;
 
           // Forward face
-          data->vertices[vertex_offset + 8] = { verts[1].position, tex_side.uvs[3], glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 9] = { verts[5].position, tex_side.uvs[2], glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 10] = { verts[6].position, tex_side.uvs[1], glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 11] = { verts[2].position, tex_side.uvs[0], glm::vec3(0.f, 0.f, 1.f) };
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 1, 5, 6, 2 }},
+            UvOrder{tex_side.uvs, { 3, 2, 1, 0 }},
+            { 0.f, 0.f, 1.f },
+            vertex_cursor
+          );
+          vertex_cursor += 4;
 
           // Left face
-          data->vertices[vertex_offset + 12] = { verts[2].position, tex_side.uvs[0], glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 13] = { verts[6].position, tex_side.uvs[1], glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 14] = { verts[7].position, tex_side.uvs[2], glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 15] = { verts[3].position, tex_side.uvs[3], glm::vec3(-1.f, 0.f, 0.f) };
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 2, 6, 7, 3 }},
+            UvOrder{tex_side.uvs, { 0, 1, 2, 3 }},
+            { -1.f, 0.f, 0.f },
+            vertex_cursor
+          );
+          vertex_cursor += 4;
 
           // Back face
-          data->vertices[vertex_offset + 16] = { verts[3].position, tex_side.uvs[3], glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 17] = { verts[7].position, tex_side.uvs[2], glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 18] = { verts[4].position, tex_side.uvs[1], glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 19] = { verts[0].position, tex_side.uvs[0], glm::vec3(0.f, 0.f, -1.f) };
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 3, 7, 4, 0 }},
+            UvOrder{tex_side.uvs, { 3, 2, 1, 0 }},
+            { 0.f, 0.f, -1.f },
+            vertex_cursor
+          );
+          vertex_cursor += 4;
 
           // Bottom face
-          data->vertices[vertex_offset + 20] = { verts[7].position, tex_bottom.uvs[1], glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 21] = { verts[6].position, tex_bottom.uvs[0], glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 22] = { verts[5].position, tex_bottom.uvs[3], glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 23] = { verts[4].position, tex_bottom.uvs[2], glm::vec3(0.f, -1.f, 0.f) };
+          LoadBlock(
+            data->vertices.data(),
+            VertsOrder{verts, { 7, 6, 5, 4 }},
+            UvOrder{tex_bottom.uvs, { 1, 0, 3, 2 }},
+            { 0.f, -1.f, 0.f },
+            vertex_cursor
+          );
+          vertex_cursor += 4;
 
         } // for z
       } // for y
@@ -135,6 +191,22 @@ namespace heh {
     data->vertex_size_bytes = data->vertices.size() * sizeof(Vertex);
     data->element_size_bytes = data->elements.size() * sizeof(int32_t);
     data->num_elements = static_cast<uint32_t>(data->elements.size());
+  }
+
+
+  static void LoadBlock(
+    Vertex* vert_data,
+    const VecOrder<float, 3, 8>& verts,
+    const VecOrder<float, 2, 4>& uv,
+    const glm::vec3& normal,
+    int vertex_cursor)
+  {
+    for (int i = 0; i < 4; ++i)
+    {
+      vert_data[vertex_cursor + i].position = verts.vec[verts.order[i]];
+      vert_data[vertex_cursor + i].tex_coords = uv.vec[uv.order[i]];
+      vert_data[vertex_cursor + i].normal = normal;
+    }
   }
 
 
@@ -150,7 +222,7 @@ namespace heh {
       // EBO
       ebo_.BindAndSetData(data->element_size_bytes, data->elements.data(), GL_STATIC_DRAW);
 
-      // position
+      //
       glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(heh::Vertex), (void*)0);
       glEnableVertexAttribArray(0);
 
