@@ -1,14 +1,14 @@
 #pragma once
 
-#include "world/world.hpp"
+#include "world/chunk.hpp"
 
 namespace heh {
 
-  namespace World {
+  namespace world {
 
-    void BuildChunk(const Chunk& chunk);
 
-  }  // namespace World
+
+  }  // namespace world
   
 
 }  // namespace heh

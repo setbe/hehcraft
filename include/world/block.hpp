@@ -4,16 +4,19 @@
 #include <toml11/toml.hpp>
 #include <glm/glm.hpp>
 
+#include "utils/image_writer.hpp"
+
 // std
 #include <unordered_map>
 #include <string>
 #include <vector>
 
 namespace heh {
+  
   struct BlockFormat {
-    std::string side_texture;
-    std::string top_texture;
-    std::string bottom_texture;
+    std::string side;
+    std::string top;
+    std::string bottom;
   };
 
   struct TextureFormat {
@@ -22,13 +25,12 @@ namespace heh {
   };
 
   namespace block_map {
-    std::unordered_map<std::string, int> name_to_id_map;
-    std::vector<BlockFormat> block_formats;
-    std::vector<std::string, TextureFormat> texture_formats_map;
+    extern std::unordered_map<int, std::string> id_to_name;
+    extern std::vector<BlockFormat> block_formats;
+    extern std::unordered_map<std::string, TextureFormat> texture_formats;
 
-    const BlockFormat& GetBlockFormat(const std::string& name);
-    void LoadBlock(const std::string& name);
+    void LoadBlocks();
 
-  } // namespace block_map
-    
+  } // namespace block_map  
+
 } // namespace heh

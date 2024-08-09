@@ -51,7 +51,6 @@ endif()
 
 set(CORE_SOURCES
   src/core/window.cpp
-  src/core/glad.c
   src/core/keys_n_mouse.cpp
   src/core/shader.cpp
 )
@@ -69,6 +68,7 @@ set(UTILS_SOURCES
 
 set(SOURCE_FILES
   src/main.cpp
+  external/glad/glad/glad.c
 )
 
 set(HEADER_FILES

@@ -1,9 +1,8 @@
 #pragma once
 
 #include "core/camera.hpp"
-#include "core/keys_n_mouse.hpp"
-
-#include "utils/toml_extended.hpp"
+#include "core/shader.hpp"
+#include "world/world.hpp"
 
 // libs
 #include <glad/glad.h>

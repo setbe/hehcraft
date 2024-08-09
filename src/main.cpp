@@ -21,11 +21,12 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 #endif
 
 
-#include "utils/image_writer.hpp" 
-
 int main(int argc, char** argv) 
 {  
   try {
+    heh::config::InitConfigFile("config.toml", "blocks.toml", "textures.toml");
+    heh::block_map::LoadBlocks();
+
     int width = heh::config::file.window.width;
     int height = heh::config::file.window.height;
     std::string window_name = heh::config::file.window.window_name;

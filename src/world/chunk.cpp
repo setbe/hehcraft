@@ -9,6 +9,7 @@
 #include <random>
 
 namespace heh {
+
   
 
   void Chunk::Generate()
@@ -16,6 +17,14 @@ namespace heh {
     data = std::make_unique<ChunkRenderData>();
     data->vertices.resize(kChunkWidth * kChunkHeight * kChunkDepth * 24);
     data->elements.resize(kChunkWidth * kChunkHeight * kChunkDepth * 36);
+    blocks_data.resize(kChunkWidth * kChunkHeight * kChunkDepth);
+
+    
+
+    for (int i = 0; i < kChunkWidth * kChunkHeight * kChunkDepth; ++i)
+    {
+      blocks_data[i] = 1;
+    }
 
     for (int x = 0; x < kChunkWidth; ++x) 
     {
@@ -48,26 +57,17 @@ namespace heh {
 
           // tex_coords
 
-          std::random_device rd;
-          std::mt19937 gen(rd());
-          std::uniform_int_distribution<> dis(0, 3);
 
-         
-          int random_number1 = dis(gen);
-          int random_number2 = dis(gen);
-
-
-          glm::ivec2 tex_index = { random_number1, random_number2 };
           const int vertex_offset = array_expansion * 24;
           const int tex_coords_index = array_expansion * 24;
 
-          const float kStartX = tex_index.x * kTextureSize;
-          const float kStartY = tex_index.y * kTextureSize;
 
-          const float kMinU = kStartX / kAtlasSize;
-          const float kMinV = kStartY / kAtlasSize;
-          const float kMaxU = (kStartX + kTextureSize) / kAtlasSize;
-          const float kMaxV = (kStartY + kTextureSize) / kAtlasSize;
+          const std::string& name = block_map::id_to_name[blocks_data[array_expansion]];
+          const BlockFormat& block = block_map::block_formats[blocks_data[array_expansion] - 1];
+
+          const TextureFormat& tex_top = block_map::texture_formats[block.top];
+          const TextureFormat& tex_side = block_map::texture_formats[block.side];
+          const TextureFormat& tex_bottom = block_map::texture_formats[block.bottom];
 
           // verts begin
 
@@ -86,43 +86,46 @@ namespace heh {
           verts[5].position = verts[1].position - glm::vec3(0.f, 1.f, 0.f);
           verts[6].position = verts[2].position - glm::vec3(0.f, 1.f, 0.f);
           verts[7].position = verts[3].position - glm::vec3(0.f, 1.f, 0.f);
+
+
           // verts end
           
           // Top face
-          data->vertices[vertex_offset + 0] = { verts[0].position, {kMinU, kMaxV}, glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 1] = { verts[1].position, {kMaxU, kMaxV}, glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 2] = { verts[2].position, {kMaxU, kMinV}, glm::vec3(0.f, 1.f, 0.f) };
-          data->vertices[vertex_offset + 3] = { verts[3].position, {kMinU, kMinV}, glm::vec3(0.f, 1.f, 0.f) };
+          data->vertices[vertex_offset + 0] = { verts[0].position, tex_top.uvs[0], glm::vec3(0.f, 1.f, 0.f) };
+          data->vertices[vertex_offset + 1] = { verts[1].position, tex_top.uvs[1], glm::vec3(0.f, 1.f, 0.f) };
+          data->vertices[vertex_offset + 2] = { verts[2].position, tex_top.uvs[2], glm::vec3(0.f, 1.f, 0.f) };
+          data->vertices[vertex_offset + 3] = { verts[3].position, tex_top.uvs[3], glm::vec3(0.f, 1.f, 0.f) };
 
           // Right face
-          data->vertices[vertex_offset + 4] = { verts[0].position, {kMaxU, kMaxV}, glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 5] = { verts[4].position, {kMinU, kMaxV}, glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 6] = { verts[5].position, {kMinU, kMinV}, glm::vec3(1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 7] = { verts[1].position, {kMaxU, kMinV}, glm::vec3(1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 4] = { verts[0].position, tex_side.uvs[0], glm::vec3(1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 5] = { verts[4].position, tex_side.uvs[1], glm::vec3(1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 6] = { verts[5].position, tex_side.uvs[2], glm::vec3(1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 7] = { verts[1].position, tex_side.uvs[3], glm::vec3(1.f, 0.f, 0.f) };
 
           // Forward face
-          data->vertices[vertex_offset + 8] = { verts[1].position, {kMinU, kMinV}, glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 9] = { verts[5].position, {kMaxU, kMinV}, glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 10] = { verts[6].position, {kMaxU, kMaxV}, glm::vec3(0.f, 0.f, 1.f) };
-          data->vertices[vertex_offset + 11] = { verts[2].position, {kMinU, kMaxV}, glm::vec3(0.f, 0.f, 1.f) };
+          data->vertices[vertex_offset + 8] = { verts[1].position, tex_side.uvs[3], glm::vec3(0.f, 0.f, 1.f) };
+          data->vertices[vertex_offset + 9] = { verts[5].position, tex_side.uvs[2], glm::vec3(0.f, 0.f, 1.f) };
+          data->vertices[vertex_offset + 10] = { verts[6].position, tex_side.uvs[1], glm::vec3(0.f, 0.f, 1.f) };
+          data->vertices[vertex_offset + 11] = { verts[2].position, tex_side.uvs[0], glm::vec3(0.f, 0.f, 1.f) };
 
           // Left face
-          data->vertices[vertex_offset + 12] = { verts[2].position, {kMaxU, kMaxV}, glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 13] = { verts[6].position, {kMinU, kMaxV}, glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 14] = { verts[7].position, {kMinU, kMinV}, glm::vec3(-1.f, 0.f, 0.f) };
-          data->vertices[vertex_offset + 15] = { verts[3].position, {kMaxU, kMinV}, glm::vec3(-1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 12] = { verts[2].position, tex_side.uvs[0], glm::vec3(-1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 13] = { verts[6].position, tex_side.uvs[1], glm::vec3(-1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 14] = { verts[7].position, tex_side.uvs[2], glm::vec3(-1.f, 0.f, 0.f) };
+          data->vertices[vertex_offset + 15] = { verts[3].position, tex_side.uvs[3], glm::vec3(-1.f, 0.f, 0.f) };
 
           // Back face
-          data->vertices[vertex_offset + 16] = { verts[3].position, {kMinU, kMinV}, glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 17] = { verts[7].position, {kMaxU, kMinV}, glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 18] = { verts[4].position, {kMaxU, kMaxV}, glm::vec3(0.f, 0.f, -1.f) };
-          data->vertices[vertex_offset + 19] = { verts[0].position, {kMinU, kMaxV}, glm::vec3(0.f, 0.f, -1.f) };
+          data->vertices[vertex_offset + 16] = { verts[3].position, tex_side.uvs[3], glm::vec3(0.f, 0.f, -1.f) };
+          data->vertices[vertex_offset + 17] = { verts[7].position, tex_side.uvs[2], glm::vec3(0.f, 0.f, -1.f) };
+          data->vertices[vertex_offset + 18] = { verts[4].position, tex_side.uvs[1], glm::vec3(0.f, 0.f, -1.f) };
+          data->vertices[vertex_offset + 19] = { verts[0].position, tex_side.uvs[0], glm::vec3(0.f, 0.f, -1.f) };
 
           // Bottom face
-          data->vertices[vertex_offset + 20] = { verts[7].position, {kMinU, kMaxV}, glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 21] = { verts[6].position, {kMaxU, kMaxV}, glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 22] = { verts[5].position, {kMaxU, kMinV}, glm::vec3(0.f, -1.f, 0.f) };
-          data->vertices[vertex_offset + 23] = { verts[4].position, {kMinU, kMinV}, glm::vec3(0.f, -1.f, 0.f) };
+          data->vertices[vertex_offset + 20] = { verts[7].position, tex_bottom.uvs[1], glm::vec3(0.f, -1.f, 0.f) };
+          data->vertices[vertex_offset + 21] = { verts[6].position, tex_bottom.uvs[0], glm::vec3(0.f, -1.f, 0.f) };
+          data->vertices[vertex_offset + 22] = { verts[5].position, tex_bottom.uvs[3], glm::vec3(0.f, -1.f, 0.f) };
+          data->vertices[vertex_offset + 23] = { verts[4].position, tex_bottom.uvs[2], glm::vec3(0.f, -1.f, 0.f) };
+
         } // for z
       } // for y
     } // for x

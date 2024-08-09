@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/buffer.hpp"
+#include "block.hpp"
 
 // libs
 #include <glad/glad.h>
@@ -42,6 +43,7 @@ namespace heh {
   struct Chunk
   {
     std::unique_ptr<ChunkRenderData> data;
+    std::vector<int16_t> blocks_data;
 
     void Generate();
     void UploadToGpu();

@@ -1,10 +1,4 @@
 ﻿#include "core/window.hpp"
-#include "core/buffer.hpp"
-#include "core/shader.hpp"
-
-#include "world/chunk.hpp"
-
-#include "utils/image_writer.hpp"
 
 // libs
 #include <glad/glad.h>
@@ -66,6 +60,9 @@ Window::Window(int width, int height, const std::string &window_name)
         0.1f,       // z_near
         1000.0f)    // z_far
 {
+  if (width < 100) width = 100;
+  if (height < 100) height = 100;
+
   camera_.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
   camera_data_.sensitivity = config::file.camera.sensitivity;
   camera_data_.fov = config::file.camera.fov;
@@ -248,6 +245,8 @@ void Window::FramebufferResizeCallback(GLFWwindow* glfw_window, int width, int h
 
     glfwSetWindowMonitor(window_ptr->GetGLFWwindow(), monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
   }
+  if (height == 0)
+    height = 1;
 
   window_ptr->width_ = width;
   window_ptr->height_ = height;
