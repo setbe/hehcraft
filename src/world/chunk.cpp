@@ -9,19 +9,37 @@
 #include <random>
 
 namespace heh {
+  enum class BlockFace : uint32_t
+  {
+    Top,
+    Side,
+    Bottom,
+    Right,
+    Left,
+    Back
+  };
+
   static int To1DArrayIndex(int x, int y, int z)
   {
-    int index = x * (kChunkDepth * kChunkHeight) + (y + kChunkHeight * z);
-    return index > kChunkWidth * kChunkHeight * kChunkDepth || index < 0 ?
-      block_map::kNullBlock :
-      index;
+    return (x * kChunkDepth) + (y * kChunkHeight) + z;
   }
 
-  template<typename T, uint8_t N_Vec, uint8_t N = 4>
+  static int GetBlock(int16_t* blocks_data, int x, int y, int z)
+  {
+    int index = To1DArrayIndex(x, y, z);
+    return 
+      x >= 16  || x < 0 || 
+      z >= 16  || z < 0 || 
+      y >= 256 || y < 0  ?
+      block_map::kNullBlock :
+      blocks_data[index];
+  }
+
+  template<typename T, uint8_t N_Vec, uint8_t N_Array>
   struct VecOrder
   {
-    std::array<glm::vec<N_Vec, T>, N> vec;
-    std::array<uint8_t, N> order;
+    std::array<glm::vec<N_Vec, T>, N_Array> vec;
+    std::array<uint8_t, N_Array> order;
   };
 
   static void LoadBlock(
@@ -43,18 +61,30 @@ namespace heh {
     int element_cursor = 0;
     int element_index_cursor = 0;
 
-    for (int i = 0; i < kChunkWidth * kChunkHeight * kChunkDepth; ++i)
+    for (int y = 0; y < kChunkHeight; ++y)
     {
-      blocks_data[i] = 1;
-    }
-
-    for (int x = 0; x < kChunkWidth; ++x) 
-    {
-      for (int z = 0; z < kChunkDepth; ++z)
+      for (int x = 0; x < kChunkDepth; ++x)
       {
-        for (int y = 0; y < kChunkHeight; ++y)
+        for (int z = 0; z < kChunkWidth; ++z)
+        {
+          if (y < 64)
+            blocks_data[To1DArrayIndex(x, y, z)] = 2;
+          else if (y < 128)
+            blocks_data[To1DArrayIndex(x, y, z)] = 3;
+          else
+            blocks_data[To1DArrayIndex(x, y, z)] = 1;
+        } // for y
+      } // for z
+    } // for x
+
+    for (int y = 0; y < kChunkHeight; ++y) 
+    {
+      for (int x = 0; x < kChunkDepth; ++x)
+      {
+        for (int z = 0; z < kChunkWidth; ++z)
         {
           const int array_expansion = To1DArrayIndex(x, y, z);
+          const int block_id = blocks_data[array_expansion];
 
 
           // data->elements
@@ -114,73 +144,94 @@ namespace heh {
           // verts end
 
 
-          // Top face
-          /*const int top_index = To1DArrayIndex(x, y + 1, z);
-          const BlockFormat& top_block = block_map::block_formats[blocks_data[top_index]];
-          if (!top_index || top_block.is_transparent)
-          {*/
           using VertsOrder = VecOrder<float, 3, 8>;
           using UvOrder = VecOrder<float, 2, 4>;
-
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 0, 1, 2, 3 }},
-            UvOrder{tex_top.uvs, { 0, 1, 2, 3 }},
-            { 0.f, 1.f, 0.f },
-            vertex_cursor
-           );
-          vertex_cursor += 4;
-          //}
+           
+          // Top face
+          const int top_block_id = GetBlock(blocks_data.data(), x, y + 1, z);
+          const BlockFormat& top_block = block_map::GetBlock(top_block_id);
+          if (!top_block_id || top_block.is_transparent)
+          {
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{verts, { 0, 1, 2, 3 }},
+              UvOrder{tex_top.uvs, { 0, 1, 2, 3 }},
+              { 0.f, 1.f, 0.f },
+              vertex_cursor
+             );
+            vertex_cursor += 4;
+          }
 
           // Right face
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 0, 4, 5, 1 }},
-            UvOrder{tex_side.uvs, { 0, 1, 2, 3 }},
-            { 1.f, 0.f, 0.f },
-            vertex_cursor
-          );
-          vertex_cursor += 4;
+          const int right_block_id = GetBlock(blocks_data.data(), x, y, z + 1);
+          const BlockFormat& right_block = block_map::GetBlock(right_block_id);
+          if (!right_block_id || right_block.is_transparent) {
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{verts, { 0, 4, 5, 1 }},
+              UvOrder{tex_side.uvs, { 0, 1, 2, 3 }},
+              { 1.f, 0.f, 0.f },
+              vertex_cursor
+            );
+            vertex_cursor += 4;
+          }
 
           // Forward face
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 1, 5, 6, 2 }},
-            UvOrder{tex_side.uvs, { 3, 2, 1, 0 }},
-            { 0.f, 0.f, 1.f },
-            vertex_cursor
-          );
-          vertex_cursor += 4;
+          const int forward_block_id = GetBlock(blocks_data.data(), x + 1, y, z);
+          const BlockFormat& forward_block = block_map::GetBlock(forward_block_id);
+          if (!forward_block_id || forward_block.is_transparent) {
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{ verts, { 1, 5, 6, 2 } },
+              UvOrder{ tex_side.uvs, { 3, 2, 1, 0 } },
+              { 0.f, 0.f, 1.f },
+              vertex_cursor
+            );
+            vertex_cursor += 4;
+          }
 
           // Left face
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 2, 6, 7, 3 }},
-            UvOrder{tex_side.uvs, { 0, 1, 2, 3 }},
-            { -1.f, 0.f, 0.f },
-            vertex_cursor
-          );
-          vertex_cursor += 4;
+          const int left_block_id = GetBlock(blocks_data.data(), x, y, z - 1);
+          const BlockFormat& left_block = block_map::GetBlock(left_block_id);
+          if (!left_block_id || left_block.is_transparent) {
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{ verts, { 2, 6, 7, 3 } },
+              UvOrder{ tex_side.uvs, { 0, 1, 2, 3 } },
+              { -1.f, 0.f, 0.f },
+              vertex_cursor
+            );
+            vertex_cursor += 4;
+          }
 
           // Back face
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 3, 7, 4, 0 }},
-            UvOrder{tex_side.uvs, { 3, 2, 1, 0 }},
-            { 0.f, 0.f, -1.f },
-            vertex_cursor
-          );
-          vertex_cursor += 4;
+          const int back_block_id = GetBlock(blocks_data.data(), x - 1, y, z);
+          const BlockFormat& back_block = block_map::GetBlock(back_block_id);
+          if (!back_block_id || back_block.is_transparent) {
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{ verts, { 3, 7, 4, 0 } },
+              UvOrder{ tex_side.uvs, { 3, 2, 1, 0 } },
+              { 0.f, 0.f, -1.f },
+              vertex_cursor
+            );
+            vertex_cursor += 4;
+          }
 
-          // Bottom face
-          LoadBlock(
-            data->vertices.data(),
-            VertsOrder{verts, { 7, 6, 5, 4 }},
-            UvOrder{tex_bottom.uvs, { 1, 0, 3, 2 }},
-            { 0.f, -1.f, 0.f },
-            vertex_cursor
-          );
-          vertex_cursor += 4;
+          const int bottom_block_id = GetBlock(blocks_data.data(), x, y - 1, z);
+          const BlockFormat& bottom_block = block_map::GetBlock(bottom_block_id);
+          if (!bottom_block_id || bottom_block.is_transparent)
+          {
+            // Bottom face
+            LoadBlock(
+              data->vertices.data(),
+              VertsOrder{ verts, { 7, 6, 5, 4 } },
+              UvOrder{ tex_bottom.uvs, { 1, 0, 3, 2 } },
+              { 0.f, -1.f, 0.f },
+              vertex_cursor
+            );
+            vertex_cursor += 4;
+          }
 
         } // for z
       } // for y
