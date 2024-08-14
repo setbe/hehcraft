@@ -86,8 +86,7 @@ class Window {
 
   std::string window_name_; /**< The name of the window. */
   GLFWwindow* window_;      /**< The GLFW window handle. */
-
-  Camera::Data camera_data_; /**< Data for the camera object.                           */ 
+  
   Camera camera_;     /**< The camera object for handling view and projection matrices. */
   Keyboard keyboard_; /**< The keyboard object for handling keyboard input.             */
   Mouse mouse_;       /**< The mouse object for handling mouse input.                   */

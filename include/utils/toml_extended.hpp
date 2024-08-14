@@ -28,6 +28,7 @@ namespace heh {
       std::string side;
       std::string top;
       std::string bottom;
+      bool is_transparent;
     };
 
     struct TextureConfig {
@@ -47,7 +48,7 @@ namespace heh {
     extern std::string blocks_file_path;
     extern std::string textures_file_path;
 
-    void InitConfigFile(
+    void InitConfigFiles(
       const std::string& main_config, 
       const std::string& blocks_config, 
       const std::string& textures_config);

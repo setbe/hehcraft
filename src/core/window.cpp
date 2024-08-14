@@ -10,6 +10,7 @@
 #include <iostream>
 #include <filesystem>
 #include <vector>
+
 using namespace glm;
 
 namespace heh {
@@ -44,28 +45,29 @@ static void InitializeOnce() {
 
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+  glfwWindowHint(GLFW_DEPTH_BITS, 24);
 }
 
 Window::Window(int width, int height, const std::string &window_name)
     : 
-    width_{width}, 
-    height_{height}, 
-    window_name_{window_name}, 
-    window_{nullptr}, 
-    camera_(
-        camera_data_, 
-        glm::vec3(0.0f, 0.0f, 3.0f), 
+    width_{width},
+    height_{height},
+    window_name_{window_name},
+    window_{nullptr},
+    camera_{
         -90.0f,   // yaw
         0.0f,     // pitch
-        0.1f,       // z_near
-        1000.0f)    // z_far
+        0.9f,     // z_near
+        1000.0f }  // z_far
 {
   if (width < 100) width = 100;
   if (height < 100) height = 100;
 
   camera_.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
-  camera_data_.sensitivity = config::file.camera.sensitivity;
-  camera_data_.fov = config::file.camera.fov;
+  camera_.SetSensitivity(config::file.camera.sensitivity);
+  camera_.SetFov(config::file.camera.fov);
+  camera_.SetPos({0.0f, 70.0f, 3.0f});
   InitWindow();
 }
 
@@ -119,19 +121,8 @@ void Window::InitWindow() {
 }
 
 void Window::Run() {
-  ImageWriter image_writer;
-  image_writer.CreateAtlas("textures", "atlas.png");
-  assert(image_writer.GetAtlasSize() == kAtlasSize && "kAtlasSize must be updated");
-
-  Chunk chunk;
-  chunk.Generate();
-  chunk.UploadToGpu();
-  chunk.ClearCpuData();
-
-  Shader shader("shaders/specular.vert", "shaders/specular.frag");
-  
-  shader.Use();
-  shader.SetInt("texture1", 0);
+  World world{camera_.GetData()};
+  world.Init();
 
   while (!glfwWindowShouldClose(window_)) {
     CalculateDeltaTime();
@@ -147,26 +138,8 @@ void Window::Run() {
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader.Use();
-    shader.SetMat4("view", camera_data_.view);
-    shader.SetMat4("projection", camera_data_.projection);
-    shader.SetVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-    shader.SetVec3("lightPos", glm::vec3(4.2f, 300.0f, 2.0f));
-    shader.SetVec3("viewPos", camera_.GetPos());
 
-    shader.SetVec3("dirLightDirection", glm::vec3(-0.2f, 0.7f, 0.6f));
-    shader.SetVec3("dirLightColor", glm::vec3(1.0f, 0.95f, 0.85f));
-
-    glm::mat4 model = glm::mat4(1.0f);
-    shader.SetMat4("model", model);
-
-    image_writer.BindAtlas();
-
-    chunk.Render();
-    //vao.Bind();
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
+    world.Render();
 
     glfwSwapBuffers(window_);
     glfwPollEvents();
@@ -191,34 +164,41 @@ void Window::HandleKeys() {
     dark_background_mode_ = !dark_background_mode_;
 
   // [F11] Toggle fullscreen mode
-  if (keyboard_.IsKeyPressed(Keyboard::Key::kF11)) {
+  if (keyboard_.IsKeyPressed(Keyboard::Key::kF11)) 
+  {
     config::file.window.fullscreen = !config::file.window.fullscreen;
     
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
 
     if (config::file.window.fullscreen)
     {
-      GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-      const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-
       glfwSetWindowMonitor(GetGLFWwindow(), monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-      config::SaveMainConfig();
       FramebufferResizeCallback(GetGLFWwindow(), mode->width, mode->height);
     }
-    else {
+    else
+    {
+      int screen_width = mode->width;
+      int screen_height = mode->height;
+
+      // Calculate the position of the window
+      int xpos = (screen_width - config::file.window.width) / 2;   // Center the X position
+      int ypos = (screen_height - config::file.window.height) / 2; // Center the Y position
+
       glfwSetWindowMonitor(
-          GetGLFWwindow(), 
-          nullptr, 50, 50, 
-          config::file.window.width, 
-          config::file.window.height, 
-          GLFW_DONT_CARE);
-      //FramebufferResizeCallback(GetGLFWwindow(), config::file.window.width, config::file.window.height);
+        GetGLFWwindow(),
+        nullptr,
+        xpos, ypos,
+        config::file.window.width,
+        config::file.window.height,
+        GLFW_DONT_CARE);
     }
   }
 
   // [Left Alt] Toggle cursor visibility
   if (keyboard_.IsKeyPressed(Keyboard::Key::kLeftAlt)) {
-    camera_data_.show_cursor = !camera_data_.show_cursor;
-    if (camera_data_.show_cursor)
+    camera_.SetShowCursor(!camera_.GetShowCursor());
+    if (camera_.GetShowCursor())
       glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     else
       glfwSetInputMode(window_, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -283,8 +263,9 @@ void Window::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) 
 }
 
 void Window::CalculateDeltaTime() {
+  // Set delta time in camera data
   current_time_ = glfwGetTime();
-  camera_data_.delta_time = static_cast<double>(current_time_ - last_time_);
+  camera_.SetDeltaTime(static_cast<double>(current_time_ - last_time_));
   last_time_ = current_time_;
   nb_frames_++;
 }

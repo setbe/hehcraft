@@ -7,7 +7,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace heh {
-
 /**
  * @class Camera
  * @brief Represents a camera in a 3D scene.
@@ -22,17 +21,17 @@ class Camera {
   float fov{80.0f};           ///< The field of view of the camera.
   glm::mat4 view{1.0f};       ///< The view matrix of the camera.
   glm::mat4 projection{1.0f}; ///< The projection matrix of the camera.
+  glm::vec3 camera_pos{0.0f}; ///< The position of the camera.
  };
   /**
    * @brief Constructs a Camera object.
-   * @param pos The position of the camera.
    * @param yaw The yaw angle of the camera.
    * @param pitch The pitch angle of the camera.
    * @param z_near The near clipping plane of the camera.
    * @param z_far The far clipping plane of the camera.
    */
-  Camera(Camera::Data &data, const glm::vec3 &pos, float yaw, float pitch, float z_near, float z_far)
-      : data_(data), pos_(pos), yaw_(yaw), pitch_(pitch), z_near_(z_near), z_far_(z_far) {
+  Camera(float yaw, float pitch, float z_near, float z_far)
+      : yaw_(yaw), pitch_(pitch), z_near_(z_near), z_far_(z_far) {
     UpdateCameraVectors();
   }
 
@@ -40,6 +39,8 @@ class Camera {
 
   Camera(const Camera&) = delete;
   Camera& operator=(const Camera&) = delete;
+
+  Camera::Data &GetData() { return data_; }
 
   /**
    * @brief Updates the camera's position and orientation based on user input.
@@ -53,27 +54,27 @@ class Camera {
     glm::vec3 horizontal_movement = glm::normalize(glm::vec3(front_.x, 0.0f, front_.z));
 
     if (Keyboard::IsKeyHeld(Keyboard::Key::kW)) {
-      pos_ += camera_speed * horizontal_movement;
+      data_.camera_pos += camera_speed * horizontal_movement;
       view_needs_update_ = true;
     }
     if (Keyboard::IsKeyHeld(Keyboard::Key::kS)) {
-      pos_ -= camera_speed * horizontal_movement;
+      data_.camera_pos -= camera_speed * horizontal_movement;
       view_needs_update_ = true;
     }
     if (Keyboard::IsKeyHeld(Keyboard::Key::kA)) {
-      pos_ -= glm::normalize(glm::cross(front_, up_)) * camera_speed;
+      data_.camera_pos -= glm::normalize(glm::cross(front_, up_)) * camera_speed;
       view_needs_update_ = true;
     }
     if (Keyboard::IsKeyHeld(Keyboard::Key::kD)) {
-      pos_ += glm::normalize(glm::cross(front_, up_)) * camera_speed;
+      data_.camera_pos += glm::normalize(glm::cross(front_, up_)) * camera_speed;
       view_needs_update_ = true;
     }
     if (Keyboard::IsKeyHeld(Keyboard::Key::kSpace)) {
-      pos_ += camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
+      data_.camera_pos += camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
       view_needs_update_ = true;
     }
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftShift)) {
-      pos_ -= camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
+      data_.camera_pos -= camera_speed * glm::vec3(0.0f, 1.0f, 0.0f);
       view_needs_update_ = true;
     }
   }
@@ -94,6 +95,8 @@ class Camera {
     view_needs_update_ = true;
   }
 
+
+  // not tested
   glm::vec3 GetRay(double xpos, double ypos, int screen_width, int screen_height) {
     float x = (2.0f * xpos) / screen_width - 1.0f;
     float y = 1.0f - (2.0f * ypos) / screen_height;
@@ -111,6 +114,8 @@ class Camera {
     return ray_wor;
   }
 
+
+  // not tested
   bool RayIntersectsBlock(const glm::vec3 &ray, const glm::vec3 &camera_pos, const glm::vec3 &block_pos) {
     glm::vec3 block_to_camera = camera_pos - block_pos;
     float distance = glm::dot(block_to_camera, ray);
@@ -127,7 +132,7 @@ class Camera {
     if (!view_needs_update_)
       return;
 
-    data_.view = glm::lookAt(pos_, pos_ + front_, up_);
+    data_.view = glm::lookAt(data_.camera_pos, data_.camera_pos + front_, up_);
     view_needs_update_ = false;
   }
 
@@ -157,14 +162,14 @@ class Camera {
    * @brief Gets the position of the camera.
    * @return The position of the camera.
    */
-  const glm::vec3& GetPos() const { return pos_; }
+  const glm::vec3& GetPos() const { return data_.camera_pos; }
 
   /**
    * @brief Sets the position of the camera.
    * @param pos The new position of the camera.
    */
   void SetPos(const glm::vec3 &pos) { 
-    pos_ = pos; 
+    data_.camera_pos = pos; 
     view_needs_update_ = true;
   }
 
@@ -213,6 +218,76 @@ class Camera {
     projection_needs_update_ = true;
   }
 
+  // not tested
+  void ExtractFrustumPlanes(glm::vec4 planes[6]) {
+    // Left
+    planes[0] = glm::vec4(data_.projection[0][3] + data_.projection[0][0],
+      data_.projection[1][3] + data_.projection[1][0],
+      data_.projection[2][3] + data_.projection[2][0],
+      data_.projection[3][3] + data_.projection[3][0]);
+
+    // Right
+    planes[1] = glm::vec4(data_.projection[0][3] - data_.projection[0][0],
+      data_.projection[1][3] - data_.projection[1][0],
+      data_.projection[2][3] - data_.projection[2][0],
+      data_.projection[3][3] - data_.projection[3][0]);
+
+    // Bottom
+    planes[2] = glm::vec4(data_.projection[0][3] + data_.projection[0][1],
+      data_.projection[1][3] + data_.projection[1][1],
+      data_.projection[2][3] + data_.projection[2][1],
+      data_.projection[3][3] + data_.projection[3][1]);
+
+    // Top
+    planes[3] = glm::vec4(data_.projection[0][3] - data_.projection[0][1],
+      data_.projection[1][3] - data_.projection[1][1],
+      data_.projection[2][3] - data_.projection[2][1],
+      data_.projection[3][3] - data_.projection[3][1]);
+
+    // Near
+    planes[4] = glm::vec4(data_.projection[0][3] + data_.projection[0][2],
+      data_.projection[1][3] + data_.projection[1][2],
+      data_.projection[2][3] + data_.projection[2][2],
+      data_.projection[3][3] + data_.projection[3][2]);
+
+    // Far
+    planes[5] = glm::vec4(data_.projection[0][3] - data_.projection[0][2],
+      data_.projection[1][3] - data_.projection[1][2],
+      data_.projection[2][3] - data_.projection[2][2],
+      data_.projection[3][3] - data_.projection[3][2]);
+
+    // Normalize the planes
+    for (int i = 0; i < 6; i++) {
+      float length = glm::length(glm::vec3(planes[i]));
+      planes[i] /= length;
+    }
+  }
+
+  // not tested
+  bool IsBoxInFrustum(const glm::vec4 planes[6], const glm::vec3& minPoint, const glm::vec3& maxPoint) {
+    for (int i = 0; i < 6; i++) {
+      glm::vec3 positive = glm::vec3(
+        planes[i].x > 0.0f ? maxPoint.x : minPoint.x,
+        planes[i].y > 0.0f ? maxPoint.y : minPoint.y,
+        planes[i].z > 0.0f ? maxPoint.z : minPoint.z
+      );
+
+      if (glm::dot(glm::vec3(planes[i]), positive) + planes[i].w < 0.0f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  float GetSensitivity() const { return data_.sensitivity; }
+  void SetSensitivity(float sensitivity) { data_.sensitivity = sensitivity; }
+
+  bool GetShowCursor() const { return data_.show_cursor; }
+  void SetShowCursor(bool show_cursor) { data_.show_cursor = show_cursor; }
+
+  float GetDeltaTime() const { return data_.delta_time; }
+  void SetDeltaTime(float delta_time) { data_.delta_time = delta_time; }
+
  private:
   /**
    * @brief Updates the camera's front, right, and up vectors based on its yaw and pitch angles.
@@ -227,8 +302,7 @@ class Camera {
     up_ = glm::normalize(glm::cross(right_, front_));
   }
 
-  Camera::Data &data_;  ///< Data for the camera object.
-  glm::vec3 pos_; ///< The position of the camera.
+  Camera::Data data_;  ///< Data for the camera object.
   glm::vec3 front_; ///< The front vector of the camera.
   glm::vec3 up_; ///< The up vector of the camera.
   glm::vec3 right_; ///< The right vector of the camera.

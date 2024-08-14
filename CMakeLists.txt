@@ -69,6 +69,7 @@ set(UTILS_SOURCES
 set(SOURCE_FILES
   src/main.cpp
   external/glad/glad/glad.c
+  external/simplexnoise/src/SimplexNoise.cpp
 )
 
 set(HEADER_FILES
@@ -84,6 +85,7 @@ set(HEADER_FILES
 
   include/utils/image_writer.hpp
   include/utils/toml_extended.hpp
+  include/utils/math.hpp
 )
 
 add_executable(hehcraft

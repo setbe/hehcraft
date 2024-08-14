@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <vector>
 #include <memory>
+#include <fstream>
+#include <sstream>
 
 
 
@@ -42,13 +44,18 @@ namespace heh {
 
   struct Chunk
   {
-    std::unique_ptr<ChunkRenderData> data;
-    std::vector<int16_t> blocks_data;
+    ChunkRenderData data;
+    std::vector<Block> blocks_data;
+    glm::ivec2 chunk_position;
 
-    void Generate();
+    void Generate(int32_t seed, int chunk_x, int chunk_z);
+    void BuildMesh();
     void UploadToGpu();
     void ClearCpuData();
     void Render();
+
+    void Serialize(const std::string& world_filename);
+    void Deserialize(const std::string& world_filename, uint32_t x, uint32_t y);
 
   private:
     Buffer vbo_{ GL_ARRAY_BUFFER };

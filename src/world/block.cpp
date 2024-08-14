@@ -7,6 +7,8 @@
 
 namespace heh {
   namespace block_map {
+    extern Block kNullBlock{ 0, 0, 0, 0 };
+
     std::unordered_map<int, std::string> id_to_name;
     std::vector<BlockFormat> block_formats;
     std::unordered_map<std::string, TextureFormat> texture_formats;
@@ -23,6 +25,7 @@ namespace heh {
         block.side = config::file.blocks[block_config.first].side;
         block.top = config::file.blocks[block_config.first].top;
         block.bottom = config::file.blocks[block_config.first].bottom;
+        block.is_transparent = config::file.blocks[block_config.first].is_transparent;
 
         id_to_name[id] = block_config.first;
         block_formats.push_back(block);

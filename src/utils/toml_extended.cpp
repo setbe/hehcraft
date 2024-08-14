@@ -22,7 +22,7 @@ namespace heh {
     Config file;
 
 
-    void InitConfigFile(
+    void InitConfigFiles(
       const std::string& main, 
       const std::string& blocks, 
       const std::string& textures) 
@@ -75,6 +75,7 @@ namespace heh {
           block_config.side = toml::find<std::string>(block, "side");
           block_config.top = toml::find<std::string>(block, "top");
           block_config.bottom = toml::find<std::string>(block, "bottom");
+          block_config.is_transparent = toml::find<bool>(block, "transparent");
 
           file.blocks[toml::find<std::string>(block, "name")] = block_config;
         }
@@ -166,6 +167,7 @@ name = "grass"
 side = "grass"
 top = "grass_top"
 bottom = "grass_bottom"
+transparent = false
 )";
     }
 
@@ -195,6 +197,7 @@ uvs = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
         out << "side = \"" << block.side << "\"\n";
         out << "top = \"" << block.top << "\"\n";
         out << "bottom = \"" << block.bottom << "\"\n";
+        out << "transparent = " << (block.is_transparent ? "true" : "false") << "\n";
         out << "\n";
       }
     }
