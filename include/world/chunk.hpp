@@ -18,12 +18,8 @@
 
 namespace heh {
 
-  constexpr const uint16_t kAtlasSize = 64;
-  constexpr const uint16_t kTextureSize = 16;
-
-  static constexpr uint32_t kChunkWidth = 16;
-  static constexpr uint32_t kChunkDepth = 16;
-  static constexpr uint32_t kChunkHeight = 256;
+  constexpr uint16_t kAtlasSize = 64;
+  constexpr uint16_t kTextureSize = 16;
 
   struct Vertex
   {
@@ -37,9 +33,10 @@ namespace heh {
     std::vector<Vertex> vertices;
     std::vector<int32_t> elements;
 
-    size_t vertex_size_bytes;
-    size_t element_size_bytes;
+    uint32_t vertex_size_bytes;
+    uint32_t element_size_bytes;
     uint32_t num_elements;
+    uint32_t padding;
   };
 
   struct Chunk

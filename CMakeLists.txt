@@ -11,7 +11,7 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_INSTALL_RPATH "")
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 
@@ -31,6 +31,7 @@ endif()
 # Paths to external libraries
 set(GLFW_DIR "${CMAKE_SOURCE_DIR}/external/glfw")
 set(GLM_DIR "${CMAKE_SOURCE_DIR}/external/glm")
+set(GLAD_DIR "${CMAKE_SOURCE_DIR}/external/glad")
 
 # Include directories
 include_directories(${GLM_DIR})
@@ -95,6 +96,8 @@ add_executable(hehcraft
   ${UTILS_SOURCES}
 
   ${HEADER_FILES}
+
+  ${GLAD_DIR}/glad/glad.c
 )
 
 # Source groups for Visual Studio filters

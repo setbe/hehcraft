@@ -6,6 +6,8 @@
 #include <stb/stb_image_write.h>
 #include <stb/stb_image.h>
 
+#include <glad/glad.h>
+
 // std
 #include <vector>
 #include <string>

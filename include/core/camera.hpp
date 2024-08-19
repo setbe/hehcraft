@@ -46,7 +46,7 @@ class Camera {
    * @brief Updates the camera's position and orientation based on user input.
    */
   void HandleKeys() {
-    float camera_speed = 5.0f * data_.delta_time;
+    float camera_speed = 8.0f * data_.delta_time;
     
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftControl))
       camera_speed *= 4.0f;
@@ -83,8 +83,8 @@ class Camera {
     if (data_.show_cursor)
       return; // Don't handle mouse input if the cursor is visible.
 
-    yaw_ += Mouse::GetDX() * data_.sensitivity;
-    pitch_ -= Mouse::GetDY() * data_.sensitivity;
+    yaw_ += static_cast<float>(Mouse::GetDX()) * data_.sensitivity;
+    pitch_ -= static_cast<float>(Mouse::GetDY()) * data_.sensitivity;
 
     if (pitch_ > 89.0f) pitch_ = 89.0f;
     if (pitch_ < -89.0f) pitch_ = -89.0f;
@@ -97,7 +97,7 @@ class Camera {
 
 
   // not tested
-  glm::vec3 GetRay(double xpos, double ypos, int screen_width, int screen_height) {
+  glm::vec3 GetRay(float xpos, float ypos, int screen_width, int screen_height) {
     float x = (2.0f * xpos) / screen_width - 1.0f;
     float y = 1.0f - (2.0f * ypos) / screen_height;
     float z = 1.0f;

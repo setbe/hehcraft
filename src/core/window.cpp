@@ -30,25 +30,6 @@ static void PrintOpenGLInfo() {
   std::cout << "OpenGL Version (integer): " << major << "." << minor << std::endl;
 }
 
-static void InitializeOnce() {
-  static bool initialized = false;
-
-  if (initialized)
-    return;
-  if (!glfwInit()) {
-    throw std::runtime_error("Failed to initialize GLFW");
-  }
-  initialized = true;
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
-
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
-  glfwWindowHint(GLFW_DEPTH_BITS, 24);
-}
-
 Window::Window(int width, int height, const std::string &window_name)
     : 
     width_{width},
@@ -58,7 +39,7 @@ Window::Window(int width, int height, const std::string &window_name)
     camera_{
         -90.0f,   // yaw
         0.0f,     // pitch
-        0.9f,     // z_near
+        0.1f,     // z_near
         1000.0f }  // z_far
 {
   if (width < 100) width = 100;
@@ -68,6 +49,7 @@ Window::Window(int width, int height, const std::string &window_name)
   camera_.SetSensitivity(config::file.camera.sensitivity);
   camera_.SetFov(config::file.camera.fov);
   camera_.SetPos({0.0f, 70.0f, 3.0f});
+
   InitWindow();
 }
 
@@ -76,8 +58,6 @@ Window::~Window() {
 }
 
 void Window::InitWindow() {
-  InitializeOnce();
-
   window_ = glfwCreateWindow(width_, height_, window_name_.c_str(), nullptr, nullptr);
   if (!window_)
     throw std::runtime_error("Failed to create GLFW window");
@@ -135,7 +115,7 @@ void Window::Run() {
     if (dark_background_mode_)
       glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
     else
-      glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+      glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
@@ -286,7 +266,6 @@ void Window::Cleanup() {
     glfwDestroyWindow(window_);
     window_ = nullptr;
   }
-  glfwTerminate();
 }
 
 }  // namespace heh

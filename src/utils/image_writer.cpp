@@ -1,14 +1,17 @@
 #include "utils/image_writer.hpp"
 
+// libs
 #include <stb/stb_image_write.h>
 #include <stb/stb_image.h>
 
+// std
 #include <vector>
 #include <string>
 #include <filesystem>
 #include <cmath>
 #include <cassert>
 #include <glad/glad.h>
+#include <iostream>
 
 
 namespace heh {
@@ -110,11 +113,25 @@ void ImageWriter::GenerateGLTexture(const std::vector<Pixel>& pixels_list) {
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, out_size_, out_size_, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels_list.data());
 
+  GLfloat aniso = 0.0f;
+  glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &aniso);
+  std::cout << "Max anisotropy: " << aniso << std::endl;
+  aniso = 0.f;
+  std::cout << "Used anisotropy: " << aniso << std::endl;
+
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, aniso);
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, -0.5f);
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+  
+  //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  
   glGenerateMipmap(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, 0);

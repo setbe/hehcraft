@@ -22,23 +22,23 @@ void main() {
   vec3 color = texColor.rgb;
 
   // Simplified Ambient Occlusion (based on face direction)
-  float ao = 1.0;
-  if (Normal.z > 0.5) { // Front face
-      ao = 0.6;
-  } else if (Normal.z < -0.5) { // Back face
-      ao = 0.4;
-  } else if (Normal.x > 0.5) { // Right face
-      ao = 0.5;
-  } else if (Normal.x < -0.5) { // Left face
-      ao = 0.5;
-  } else if (Normal.y > 0.5) { // Top face
-      ao = 0.8;
-  } else if (Normal.y < -0.5) { // Bottom face
-      ao = 0.3;
-  }
+  // float ao = 1.0;
+  // if (Normal.z > 0.5) { // Front face
+  //     ao = 0.6;
+  // } else if (Normal.z < -0.5) { // Back face
+  //     ao = 0.4;
+  // } else if (Normal.x > 0.5) { // Right face
+  //     ao = 0.5;
+  // } else if (Normal.x < -0.5) { // Left face
+  //     ao = 0.5;
+  // } else if (Normal.y > 0.5) { // Top face
+  //     ao = 0.65;
+  // } else if (Normal.y < -0.5) { // Bottom face
+  //     ao = 0.3;
+  // }
 
   // Ambient lighting
-  vec3 ambient = 0.3 * color * ao;
+  vec3 ambient = color * 0.5;// ao;
 
   // Diffuse lighting
   vec3 norm = normalize(Normal);

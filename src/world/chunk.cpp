@@ -16,38 +16,7 @@
 #include <iostream>
 
 namespace heh {
-  enum class BlockFace : uint32_t
-  {
-    Top,
-    Side,
-    Bottom,
-    Right,
-    Left,
-    Back
-  };
-
-  static int To1DArrayIndex(int x, int y, int z)
-  {
-    return (x * kChunkDepth) + (y * kChunkHeight) + z;
-  }
-
-  static bool IsBlockOnChunkEdge(int x, int y, int z)
-  {
-    return x == 0 || x == kChunkWidth  - 1 ||
-           y == 0 || y == kChunkHeight - 1 ||
-           z == 0 || z == kChunkDepth  - 1;
-  }
-
-  static const Block& GetBlock(Block* blocks_data, int x, int y, int z)
-  {
-    int index = To1DArrayIndex(x, y, z);
-    return 
-      x >= 16  || x < 0 || 
-      z >= 16  || z < 0 || 
-      y >= 256 || y < 0  ?
-      block_map::kNullBlock :
-      blocks_data[index];
-  }
+  
 
   template<typename T, uint8_t N_Vec, uint8_t N_Array>
   struct VecOrder
@@ -62,23 +31,24 @@ namespace heh {
     const VecOrder<float, 2, 4>& uv,
     const glm::vec3& normal,
     int vertex_cursor,
-    int element_index_cursor,
-    int element_cursor);
+    int element_index_cursor);
   
 
   void Chunk::Generate(int32_t seed, int chunk_x, int chunk_z)
   {
-    const int world_chunk_x = chunk_x * 16;
-    const int world_chunk_z = chunk_z * 16;
-
+    const int world_chunk_x = chunk_x * kChunkWidth;
+    const int world_chunk_z = chunk_z * kChunkDepth;
     chunk_position = { chunk_x, chunk_z };
 
-    
-    blocks_data.clear();
-
-    
+    blocks_data.clear();    
     blocks_data.resize(kChunkWidth * kChunkHeight * kChunkDepth);
-    const SimplexNoise generator;
+
+    const SimplexNoise generator(
+      .005f, // frequency
+      80.f,  // amplitude
+      2.f,   // lacunarity
+      .5f);  // persistence
+    
 
     for (int y = 0; y < kChunkHeight; ++y)
     {
@@ -86,19 +56,18 @@ namespace heh {
       {
         for (int z = 0; z < kChunkWidth; ++z)
         {
-          const int array1d = To1DArrayIndex(x, y, z);
-          const float increment_size = 1000.0f;
+          const int array1d = Block::To1DArrayIndex(x, y, z);
 
-          float max_height_float = generator.fractal(10, (x + world_chunk_x) / increment_size, (z + world_chunk_z) / increment_size) * 30.0f + 70.0f;
-          int16_t max_height = (int16_t)max_height_float;
+          float height_float = generator.fractal(5, (x + world_chunk_x), (z + world_chunk_z)) * 80.f + 70.f;
+          int16_t height = (int16_t)height_float;
 
 
-          if (y < max_height - 5)
-            blocks_data[array1d].id = 3;
-          else if (y < max_height)
-            blocks_data[array1d].id = 1;
-          else if (y == max_height)
-            blocks_data[array1d].id = 2;
+          if (y < height - 5)
+            blocks_data[array1d].id = 3; // stone
+          else if (y < height)
+            blocks_data[array1d].id = 1; // grass
+          else if (y == height)
+            blocks_data[array1d].id = 2; // dirt
         } // for y
       } // for z
     } // for x
@@ -108,6 +77,8 @@ namespace heh {
   {
     data.vertices.clear();
     data.elements.clear();
+
+    // TODO: Optimize this
     data.vertices.resize(kChunkWidth * kChunkHeight * kChunkDepth * 24);
     data.elements.resize(kChunkWidth * kChunkHeight * kChunkDepth * 36);
 
@@ -115,7 +86,6 @@ namespace heh {
     const int world_chunk_z = chunk_position.y * 16;
 
     int vertex_cursor = 0;
-    int element_cursor = 0;
     int element_index_cursor = 0;
 
     for (int y = 0; y < kChunkHeight; ++y) 
@@ -124,13 +94,13 @@ namespace heh {
       {
         for (int z = 0; z < kChunkWidth; ++z)
         {
-          const Block& block = GetBlock(blocks_data.data(), x, y, z);
+          const Block& block = Block::At(blocks_data.data(), x, y, z);
           const int block_id = block.id;
 
           if (block.id == block_map::kNullBlock.id)
             continue;
 
-          const int array_expansion = To1DArrayIndex(x, y, z);
+          const int array_expansion = Block::To1DArrayIndex(x, y, z);
 
           const BlockFormat& block_format = block_map::GetBlock(block.id);
 
@@ -163,7 +133,7 @@ namespace heh {
           using UvOrder = VecOrder<float, 2, 4>;
            
           // Top face
-          const int top_block_id = GetBlock(blocks_data.data(), x, y + 1, z).id;
+          const int top_block_id = Block::At(blocks_data.data(), x, y + 1, z).id;
           const BlockFormat& top_block = block_map::GetBlock(top_block_id);
           if (!top_block_id || top_block.is_transparent)
           {
@@ -173,16 +143,14 @@ namespace heh {
               UvOrder{ tex_top.uvs, { 0, 1, 2, 3 } },
               { 0.f, 1.f, 0.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
           // Right face
-          const int right_block_id = GetBlock(blocks_data.data(), x, y, z + 1).id;
+          const int right_block_id = Block::At(blocks_data.data(), x, y, z + 1).id;
           const BlockFormat& right_block = block_map::GetBlock(right_block_id);
           if (!right_block_id || right_block.is_transparent) {
             LoadBlock(
@@ -191,16 +159,14 @@ namespace heh {
               UvOrder{ tex_side.uvs, { 0, 1, 2, 3 } },
               { 1.f, 0.f, 0.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
           // Forward face
-          const int forward_block_id = GetBlock(blocks_data.data(), x + 1, y, z).id;
+          const int forward_block_id = Block::At(blocks_data.data(), x + 1, y, z).id;
           const BlockFormat& forward_block = block_map::GetBlock(forward_block_id);
           if (!forward_block_id || forward_block.is_transparent) {
             LoadBlock(
@@ -209,16 +175,14 @@ namespace heh {
               UvOrder{ tex_side.uvs, { 3, 2, 1, 0 } },
               { 0.f, 0.f, 1.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
           // Left face
-          const int left_block_id = GetBlock(blocks_data.data(), x, y, z - 1).id;
+          const int left_block_id = Block::At(blocks_data.data(), x, y, z - 1).id;
           const BlockFormat& left_block = block_map::GetBlock(left_block_id);
           if (!left_block_id || left_block.is_transparent) {
             LoadBlock(
@@ -227,16 +191,14 @@ namespace heh {
               UvOrder{ tex_side.uvs, { 0, 1, 2, 3 } },
               { -1.f, 0.f, 0.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
           // Back face
-          const int back_block_id = GetBlock(blocks_data.data(), x - 1, y, z).id;
+          const int back_block_id = Block::At(blocks_data.data(), x - 1, y, z).id;
           const BlockFormat& back_block = block_map::GetBlock(back_block_id);
           if (!back_block_id || back_block.is_transparent) {
             LoadBlock(
@@ -245,16 +207,14 @@ namespace heh {
               UvOrder{ tex_side.uvs, { 3, 2, 1, 0 } },
               { 0.f, 0.f, -1.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
           // Bottom face
-          const int bottom_block_id = GetBlock(blocks_data.data(), x, y - 1, z).id;
+          const int bottom_block_id = Block::At(blocks_data.data(), x, y - 1, z).id;
           const BlockFormat& bottom_block = block_map::GetBlock(bottom_block_id);
           if (!bottom_block_id || bottom_block.is_transparent)
           {
@@ -265,12 +225,10 @@ namespace heh {
               UvOrder{ tex_bottom.uvs, { 1, 0, 3, 2 } },
               { 0.f, -1.f, 0.f },
               vertex_cursor,
-              element_index_cursor,
-              element_cursor
+              element_index_cursor
             );
             vertex_cursor += 4;
             element_index_cursor += 6;
-            element_cursor += 4;
           }
 
         } // for z
@@ -280,11 +238,10 @@ namespace heh {
     std::cout << "Vertex size (before): " << data.vertices.size() << std::endl;
     std::cout << "vertex cursor: " << vertex_cursor << std::endl;
     std::cout << "Element size (before): " << data.elements.size() << std::endl;
-    std::cout << "element cursor: " << element_cursor << std::endl;
     std::cout << "element index: " << element_index_cursor << std::endl;
     
     data.vertices.resize(vertex_cursor);
-    data.elements.resize(element_cursor * 2);
+    data.elements.resize(vertex_cursor * 2);
 
     std::cout << "Vertex size (after): " << data.vertices.size() << std::endl;
     std::cout << "Element size (after): " << data.elements.size() << std::endl;
@@ -294,9 +251,9 @@ namespace heh {
     
 
     // Grab calculated data into a struct
-    data.vertex_size_bytes = data.vertices.size() * sizeof(Vertex);
-    data.element_size_bytes = data.elements.size() * sizeof(int32_t);
-    data.num_elements = static_cast<uint32_t>(data.elements.size());
+    data.vertex_size_bytes = data.vertices.size() * sizeof(decltype(data.vertices)::value_type);
+    data.element_size_bytes = data.elements.size() * sizeof(decltype(data.elements)::value_type);
+    data.num_elements = static_cast<decltype(data.elements)::value_type>(data.elements.size());
   }
 
 
@@ -306,8 +263,7 @@ namespace heh {
     const VecOrder<float, 2, 4>& uv,
     const glm::vec3& normal,
     int vertex_cursor,
-    int element_index_cursor,
-    int element_cursor)
+    int element_index_cursor)
   {
     for (int i = 0; i < 4; ++i)
     {
@@ -318,13 +274,13 @@ namespace heh {
 
     // 0 1 2
     // 0 2 3
-    render_data.elements.data()[element_index_cursor + 0] = element_cursor + 0;
-    render_data.elements.data()[element_index_cursor + 1] = element_cursor + 1;
-    render_data.elements.data()[element_index_cursor + 2] = element_cursor + 2;
-
-    render_data.elements.data()[element_index_cursor + 3] = element_cursor + 0;
-    render_data.elements.data()[element_index_cursor + 4] = element_cursor + 2;
-    render_data.elements.data()[element_index_cursor + 5] = element_cursor + 3;
+    render_data.elements.data()[element_index_cursor + 0] = vertex_cursor + 0;
+    render_data.elements.data()[element_index_cursor + 1] = vertex_cursor + 1;
+    render_data.elements.data()[element_index_cursor + 2] = vertex_cursor + 2;
+                                                            
+    render_data.elements.data()[element_index_cursor + 3] = vertex_cursor + 0;
+    render_data.elements.data()[element_index_cursor + 4] = vertex_cursor + 2;
+    render_data.elements.data()[element_index_cursor + 5] = vertex_cursor + 3;
   }
 
 

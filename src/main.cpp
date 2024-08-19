@@ -27,6 +27,18 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 int main(int argc, char** argv) 
 {  
   try {
+    if (!glfwInit()) {
+      throw std::runtime_error("Failed to initialize GLFW");
+    }
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+
+    glfwWindowHint(GLFW_DEPTH_BITS, 32);
+
     // Initialize the configuration files
     heh::config::InitConfigFiles("config.toml", "blocks.toml", "textures.toml");
     // Load the blocks configuration
@@ -42,6 +54,8 @@ int main(int argc, char** argv)
     
     // Run the main loop
     window.Run();
+
+    glfwTerminate();
 
   } catch (const std::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;

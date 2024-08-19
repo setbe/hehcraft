@@ -14,11 +14,56 @@
 
 namespace heh {
 
+  constexpr uint32_t kChunkWidth = 16;
+  constexpr uint32_t kChunkDepth = 16;
+  constexpr uint32_t kChunkHeight = 256;
+
   struct Block {
-    int16_t id;
-    int8_t light_level;
-    int8_t rotation;
-    int32_t padding;
+    // One most significant bit is used to indicate if the block is transparent
+    uint16_t id;
+    uint8_t light_level;
+    uint8_t rotation;
+
+    /*
+      0000 0000
+      |||| ||||
+      |||| |||+---> Top face    (1 << 0)
+      |||| ||+----> Front face  (1 << 1)
+      |||| |+-----> Bottom face (1 << 2)
+      |||| +------> Right face  (1 << 3)
+      |||+--------> Left face   (1 << 4)
+      ||+---------> Back face   (1 << 5)
+      |+----------> All faces were culled        (1 << 6)
+      +-----------> Only the top face is visible (1 << 7)
+    */
+    uint8_t culled_faces;
+    uint16_t padding;
+
+    static enum class Face : uint8_t
+    {
+      Top = 0,
+      Front = 1,
+      Bottom = 2,
+      Right = 3,
+      Left = 4,
+      Back = 5,
+      AllCulled = 6,
+      OnlyTopVisible = 7
+    };
+
+    inline bool GetFace(Face face) const noexcept;
+    void SetFace(Face face, bool visible) noexcept;
+
+    inline bool IsTransparent() const noexcept {
+      // MSB is checked using a bitmask. 
+      return (id & 0x8000) != 0; // 0x8000 = 1000 0000 0000 0000 in binary
+    }
+
+    void CalculateLightLevel() noexcept;
+
+    static int To1DArrayIndex(int x, int y, int z);
+    static const Block& At(Block* blocks_data, int x, int y, int z);
+    static bool OnChunkEdge(int x, int y, int z);
   };
 
   struct BlockFormat {
