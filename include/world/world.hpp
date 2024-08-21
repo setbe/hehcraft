@@ -27,7 +27,7 @@ namespace heh {
         4096  (64x64 chunks), 4225, 5625, 7225, 9025, 11025, 13225,            
         16384 (128x128 chunks), 18225, 21025, 24025
   */
-  constexpr NumChunkInt kNumChunks = 64;
+  constexpr NumChunkInt kNumChunks = 16;
   
   static constexpr NumChunkInt kChunksPerSide = heh::math::SqrtInt(kNumChunks);
   static constexpr NumChunkInt kHalfChunks = kChunksPerSide / 2;
@@ -42,18 +42,24 @@ namespace heh {
 
     Camera::Data &camera_data_;
     Shader shader_;
-    ImageWriter atlas_writer_;
 
     glm::mat4 model_{1.0f};
+    glm::ivec2 player_chunk_{0, 0};
+
+    static ImageWriter atlas_writer_;
     
-   public:
+  public:
     World(Camera::Data &camera_data);
     ~World();
 
     void Init();
-    uint32_t GetSeed() const { return seed_; }
+    uint32_t GetSeed() const noexcept { return seed_; }
+    glm::ivec2 GetPlayerChunk() const noexcept { return player_chunk_; }
 
     void Render();
+
+  private:
+    glm::ivec2 CalculatePlayerChunk() const noexcept;
   };
   
 

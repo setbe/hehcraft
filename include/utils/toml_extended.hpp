@@ -24,16 +24,16 @@ namespace heh {
     };
 
     struct BlockConfig {
-      uint32_t id;
+      uint32_t id{0};
       std::string side;
       std::string top;
       std::string bottom;
-      bool is_transparent;
+      bool is_transparent{false};
     };
 
     struct TextureConfig {
       std::string name;
-      glm::vec2 uvs[4];
+      glm::vec2 uvs[4]{};
     };
 
     struct Config {

@@ -3,36 +3,38 @@
 // libs
 #include <glad/glad.h>
 
-// std
-#include <stdexcept>
-
 class Buffer {
 public:
 
   // glGenBuffers(1, &id_)
-  Buffer(GLenum target) : target_(target) { glGenBuffers(1, &id_); }
+  Buffer(GLenum target) noexcept 
+    : target_(target) 
+  { 
+    glGenBuffers(1, &id_); 
+  }
+
   ~Buffer() { glDeleteBuffers(1, &id_); }
 
   Buffer(const Buffer&) = delete;
   Buffer& operator=(const Buffer&) = delete;
 
-  inline void Bind() const { glBindBuffer(target_, id_); }
-  inline void Unbind() const { glBindBuffer(target_, 0); }
+  inline void Bind() const noexcept { 
+    glBindBuffer(target_, id_); 
+  }
 
-  inline void SetData(GLsizeiptr size, const void* data, GLenum usage) {
+  inline void Unbind() const noexcept { 
+    glBindBuffer(target_, 0);
+  }
+
+  inline void SetData(GLsizeiptr size, const void* data, GLenum usage) const noexcept {
     glBufferData(target_, size, data, usage);
   }
 
-  inline void BindAndSetData(GLsizeiptr size, const void* data, GLenum usage) {
-    Bind();
-    SetData(size, data, usage);
-  }
-
-  inline void SetSubData(GLintptr offset, GLsizeiptr size, const void* data) {
+  inline void SetSubData(GLintptr offset, GLsizeiptr size, const void* data) const noexcept {
     glBufferSubData(target_, offset, size, data);
   }
 
-  GLuint GetID() const { return id_; }
+  GLuint GetID() const noexcept { return id_; }
 
 private:
   GLuint id_;
@@ -45,7 +47,7 @@ class VertexArray {
 public:
 
   // glGenVertexArrays(1, &id_)
-  VertexArray() { glGenVertexArrays(1, &id_); }
+  VertexArray() noexcept { glGenVertexArrays(1, &id_); }
   ~VertexArray() { glDeleteVertexArrays(1, &id_); }
 
   VertexArray(const VertexArray&) = delete;

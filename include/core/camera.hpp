@@ -40,12 +40,12 @@ class Camera {
   Camera(const Camera&) = delete;
   Camera& operator=(const Camera&) = delete;
 
-  Camera::Data &GetData() { return data_; }
+  Camera::Data &GetData() noexcept { return data_; }
 
   /**
    * @brief Updates the camera's position and orientation based on user input.
    */
-  void HandleKeys() {
+  void HandleKeys() noexcept {
     float camera_speed = 8.0f * data_.delta_time;
     
     if (Keyboard::IsKeyHeld(Keyboard::Key::kLeftControl))
@@ -79,7 +79,7 @@ class Camera {
     }
   }
 
-  void HandleMousePosition(double xpos, double ypos) {
+  void HandleMousePosition(double xpos, double ypos) noexcept {
     if (data_.show_cursor)
       return; // Don't handle mouse input if the cursor is visible.
 
@@ -97,7 +97,7 @@ class Camera {
 
 
   // not tested
-  glm::vec3 GetRay(float xpos, float ypos, int screen_width, int screen_height) {
+  glm::vec3 GetRay(float xpos, float ypos, int screen_width, int screen_height) noexcept {
     float x = (2.0f * xpos) / screen_width - 1.0f;
     float y = 1.0f - (2.0f * ypos) / screen_height;
     float z = 1.0f;
@@ -116,7 +116,7 @@ class Camera {
 
 
   // not tested
-  bool RayIntersectsBlock(const glm::vec3 &ray, const glm::vec3 &camera_pos, const glm::vec3 &block_pos) {
+  bool RayIntersectsBlock(const glm::vec3 &ray, const glm::vec3 &camera_pos, const glm::vec3 &block_pos) noexcept {
     glm::vec3 block_to_camera = camera_pos - block_pos;
     float distance = glm::dot(block_to_camera, ray);
     glm::vec3 point = block_pos + distance * ray;
@@ -128,7 +128,7 @@ class Camera {
   /**
    * @brief Calculates the view matrix for the camera if it needs updating.
    */
-  void LookAt() {
+  void LookAt() noexcept {
     if (!view_needs_update_)
       return;
 
@@ -139,7 +139,7 @@ class Camera {
   /**
    * @brief Calculates the projection matrix for the camera if it needs updating.
    */
-  void ProjectionMatrix() {
+  void ProjectionMatrix() noexcept {
     if (!projection_needs_update_)
       return;
 
@@ -147,13 +147,13 @@ class Camera {
     projection_needs_update_ = false;
   }
 
-  float GetAspectRatio() const { return data_.aspect_ratio; }
+  float GetAspectRatio() const noexcept { return data_.aspect_ratio; }
 
   /**
    * @brief Sets the aspect ratio of the camera.
    * @param aspect_ratio The new aspect ratio of the camera.
    */
-  void SetAspectRatio(float aspect_ratio) {
+  void SetAspectRatio(float aspect_ratio) noexcept {
     data_.aspect_ratio = aspect_ratio;
     projection_needs_update_ = true;
   }
@@ -162,13 +162,13 @@ class Camera {
    * @brief Gets the position of the camera.
    * @return The position of the camera.
    */
-  const glm::vec3& GetPos() const { return data_.camera_pos; }
+  const glm::vec3& GetPos() const noexcept { return data_.camera_pos; }
 
   /**
    * @brief Sets the position of the camera.
    * @param pos The new position of the camera.
    */
-  void SetPos(const glm::vec3 &pos) { 
+  void SetPos(const glm::vec3 &pos) noexcept {
     data_.camera_pos = pos; 
     view_needs_update_ = true;
   }
@@ -177,13 +177,13 @@ class Camera {
    * @brief Gets the field of view of the camera.
    * @return The field of view of the camera.
    */
-  float GetFov() const { return data_.fov; }
+  float GetFov() const noexcept { return data_.fov; }
 
   /**
    * @brief Sets the field of view of the camera.
    * @param fov The new field of view of the camera.
    */
-  void SetFov(float fov) { 
+  void SetFov(float fov) noexcept {
     data_.fov = fov; 
     projection_needs_update_ = true;
   }
@@ -192,13 +192,13 @@ class Camera {
    * @brief Gets the near clipping plane of the camera.
    * @return The near clipping plane of the camera.
    */
-  float GetZNear() const { return z_near_; }
+  float GetZNear() const noexcept { return z_near_; }
 
   /**
    * @brief Sets the near clipping plane of the camera.
    * @param z_near The new near clipping plane of the camera.
    */
-  void SetZNear(float z_near) { 
+  void SetZNear(float z_near) noexcept {
     z_near_ = z_near; 
     projection_needs_update_ = true;
   }
@@ -207,13 +207,13 @@ class Camera {
    * @brief Gets the far clipping plane of the camera.
    * @return The far clipping plane of the camera.
    */
-  float GetZFar() const { return z_far_; }
+  float GetZFar() const noexcept { return z_far_; }
 
   /**
    * @brief Sets the far clipping plane of the camera.
    * @param z_far The new far clipping plane of the camera.
    */
-  void SetZFar(float z_far) { 
+  void SetZFar(float z_far) noexcept {
     z_far_ = z_far; 
     projection_needs_update_ = true;
   }
@@ -279,20 +279,20 @@ class Camera {
     return true;
   }
 
-  float GetSensitivity() const { return data_.sensitivity; }
-  void SetSensitivity(float sensitivity) { data_.sensitivity = sensitivity; }
+  float GetSensitivity() const noexcept { return data_.sensitivity; }
+  void SetSensitivity(float sensitivity) noexcept { data_.sensitivity = sensitivity; }
 
-  bool GetShowCursor() const { return data_.show_cursor; }
-  void SetShowCursor(bool show_cursor) { data_.show_cursor = show_cursor; }
+  bool GetShowCursor() const noexcept { return data_.show_cursor; }
+  void SetShowCursor(bool show_cursor) noexcept { data_.show_cursor = show_cursor; }
 
-  float GetDeltaTime() const { return data_.delta_time; }
-  void SetDeltaTime(float delta_time) { data_.delta_time = delta_time; }
+  float GetDeltaTime() const noexcept { return data_.delta_time; }
+  void SetDeltaTime(float delta_time) noexcept { data_.delta_time = delta_time; }
 
  private:
   /**
    * @brief Updates the camera's front, right, and up vectors based on its yaw and pitch angles.
    */
-  void UpdateCameraVectors() {
+  void UpdateCameraVectors() noexcept {
     glm::vec3 front;
     front.x = cos(glm::radians(yaw_)) * cos(glm::radians(pitch_));
     front.y = sin(glm::radians(pitch_));

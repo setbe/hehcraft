@@ -4,11 +4,14 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+// std
+#include <bitset>
+
 namespace heh {
 
 class Keyboard {
  public:
-  enum class Key {
+  enum class Key : int {
     kLeftAlt = GLFW_KEY_LEFT_ALT,
     kLeftControl = GLFW_KEY_LEFT_CONTROL,
     kLeftShift = GLFW_KEY_LEFT_SHIFT,
@@ -96,7 +99,7 @@ class Keyboard {
    * @param action The action that was performed on the key (GLFW_PRESS or GLFW_RELEASE).
    * @param mods Bit field describing which modifier keys were held down.
    */
-  static void HandleKey(int key, int scancode, int action, int mods) {
+  static void HandleKey(int key, int scancode, int action, int mods) noexcept {
     if (action == GLFW_PRESS) {
       keys_[key] = true;
       keys_held_[key] = true;
@@ -107,14 +110,53 @@ class Keyboard {
       keys_released_[key] = true;
     }
   }
-  static bool IsKeyPressed(Key key)  { return keys_[static_cast<int>(key)]; }
-  static bool IsKeyReleased(Key key) { return keys_released_[static_cast<int>(key)]; }
-  static bool IsKeyHeld(Key key)     { return keys_held_[static_cast<int>(key)]; }
+  /**
+   * @brief Checks if a key was pressed.
+   * @param[in] key The Keyboard::Key that was pressed.
+   * @return True if the key was pressed, false otherwise.
+   */
+  static bool IsKeyPressed(Key key) noexcept { return keys_.test(static_cast<int>(key)); }
+
+  /**
+   * @brief Checks if a key was released.
+   * @param[in] key The Keyboard::Key that was released.
+   * @return True if the key was released, false otherwise.
+   */
+  static bool IsKeyReleased(Key key) noexcept { return keys_released_.test(static_cast<int>(key)); }
+
+  /**
+   * @brief Checks if a key is held.
+   * @param[in] key The Keyboard::Key that is held.
+   * @return True if the key is held, false otherwise.
+   */
+  static bool IsKeyHeld(Key key) noexcept { return keys_held_.test(static_cast<int>(key)); }
+
+
+  /**
+   * @brief Checks if a key was pressed.
+   * @param[in] key The GLFW_KEY that was pressed.
+   * @return True if the key was pressed, false otherwise.
+   */
+  static bool IsKeyPressed(int key) noexcept { return keys_.test(key); }
+
+  /**
+   * @brief Checks if a key was released.
+   * @param[in] key The GLFW_KEY that was released.
+   * @return True if the key was released, false otherwise.
+   */
+  static bool IsKeyReleased(int key) noexcept { return keys_released_.test(key); }
+  
+  /**
+   * @brief Checks if a key is held.
+   * @param[in] key The GLFW_KEY that is held.
+   * @return True if the key is held, false otherwise.
+   */
+  static bool IsKeyHeld(int key) noexcept { return keys_held_.test(key); }
 
  private:
-  static bool keys_[GLFW_KEY_LAST + 1];           //< The state of the keys.
-  static bool keys_released_[GLFW_KEY_LAST + 1];  //< The state of the keys that were released.
-  static bool keys_held_[GLFW_KEY_LAST + 1];      //< The state of the keys that are held.
+  static std::bitset<GLFW_KEY_LAST + 1> keys_;          //< The state of the keys.
+  static std::bitset<GLFW_KEY_LAST + 1> keys_released_; //< The state of the keys that were released.
+  static std::bitset<GLFW_KEY_LAST + 1> keys_held_;     //< The state of the keys that are held.
 };
 
 class Mouse {
@@ -127,40 +169,40 @@ class Mouse {
 
   /**
    * @brief Handles mouse button events.
-   * @param button The button that was pressed or released.
+   * @param button The button that was pressed, released, or held.
    * @param action The action that was performed on the button (GLFW_PRESS or GLFW_RELEASE).
    * @param mods Bit field describing which modifier keys were held down.
    */
-  static void HandleMouseButton(int button, int action, int mods);
+  static void HandleMouseButton(int button, int action, int mods) noexcept;
 
   /**
    * @brief Handles cursor position events.
    * @param xpos The new x-coordinate of the cursor.
    * @param ypos The new y-coordinate of the cursor.
    */
-  static void HandleCursorPosition(double xpos, double ypos);
+  static void HandleCursorPosition(double xpos, double ypos) noexcept;
 
   /**
    * @brief Handles scroll events.
    * @param xoffset The scroll offset along the x-axis.
    * @param yoffset The scroll offset along the y-axis.
    */
-  static void HandleScroll(double xoffset, double yoffset);
+  static void HandleScroll(double xoffset, double yoffset) noexcept;
 
-  static bool IsButtonPressed(int button) { return buttons_[button]; }
-  static bool IsButtonReleased(int button) { return buttons_released_[button]; }
-  static bool IsButtonHeld(int button) { return buttons_held_[button]; }
-  static double GetX() { return x_; }
-  static double GetY() { return y_; }
-  static double GetDX() { return dx_; }
-  static double GetDY() { return dy_; }
-  static double GetScrollX() { return scroll_x_; }
-  static double GetScrollY() { return scroll_y_; }
+  static bool IsButtonPressed(int button) noexcept { return buttons_[button]; }
+  static bool IsButtonReleased(int button) noexcept { return buttons_released_[button]; }
+  static bool IsButtonHeld(int button) noexcept { return buttons_held_[button]; }
+  static double GetX() noexcept { return x_; }
+  static double GetY() noexcept { return y_; }
+  static double GetDX() noexcept { return dx_; }
+  static double GetDY() noexcept { return dy_; }
+  static double GetScrollX() noexcept { return scroll_x_; }
+  static double GetScrollY() noexcept { return scroll_y_; }
 
   /**
    * @brief Resets the delta values.
    */
-  inline static void ResetDeltas() {
+  inline static void ResetDeltas() noexcept {
     dx_ = 0.0;
     dy_ = 0.0;
   }

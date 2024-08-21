@@ -107,7 +107,7 @@ void ImageWriter::CreateAtlas(const std::string& tex_path, const std::string& ou
   GenerateGLTexture(pixels_list);
 }
 
-void ImageWriter::GenerateGLTexture(const std::vector<Pixel>& pixels_list) {
+void ImageWriter::GenerateGLTexture(const std::vector<Pixel>& pixels_list) noexcept {
   glGenTextures(1, &atlas_texture_id_);
   glBindTexture(GL_TEXTURE_2D, atlas_texture_id_);
 

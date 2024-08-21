@@ -176,12 +176,7 @@ transparent = false
       if (!out)
         throw std::runtime_error("Failed to open file for writing: " + textures_file_path);
 
-      out << R"(
-# Textures configuration
-[[textures]]
-name = "block"
-uvs = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
-)";
+      out << "# Textures configuration";
     }
 
     void SaveBlocksConfig() {
@@ -213,9 +208,9 @@ uvs = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]
         out << "uvs = [\n";
         for (size_t i = 0; i < 4; ++i) {
           out << "\t[" 
-            << std::fixed << std::setprecision(6) << texture.uvs[i].x 
+            << std::fixed << std::setprecision(6) << texture.uvs[i].x
                << ", " 
-            << std::fixed << std::setprecision(6) << texture.uvs[i].y 
+            << std::fixed << std::setprecision(6) << texture.uvs[i].y
                 << "]";
           if (i < 3) 
             out << ", ";

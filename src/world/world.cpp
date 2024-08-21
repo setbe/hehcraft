@@ -6,6 +6,7 @@
 
 namespace heh {
 
+  ImageWriter World::atlas_writer_;
   
   World::World(Camera::Data& camera_data)
     : shader_{ "shaders/specular.vert", "shaders/specular.frag" },
@@ -26,6 +27,7 @@ namespace heh {
     // Create atlas
     atlas_writer_.CreateAtlas("textures", "atlas.png");
     assert(atlas_writer_.GetAtlasSize() == kAtlasSize && "kAtlasSize must be updated");
+    
 
     // Generate chunks
     chunks_ = std::make_unique<Chunk[]>(kNumChunks);
@@ -38,8 +40,6 @@ namespace heh {
         chunks_[chunk_index].Generate(seed_, x, z);
         chunks_[chunk_index].BuildMesh();
         //chunks_[chunk_index].Serialize("large_world");
-        chunks_[chunk_index].UploadToGpu();
-        chunks_[chunk_index].ClearCpuData();
         chunk_index++;
       }
     }

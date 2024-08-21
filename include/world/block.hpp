@@ -1,10 +1,9 @@
 #pragma once
 
-// libs
-#include <toml11/toml.hpp>
-#include <glm/glm.hpp>
-
 #include "utils/image_writer.hpp"
+
+// libs
+#include <glm/glm.hpp>
 
 // std
 #include <unordered_map>
@@ -39,7 +38,7 @@ namespace heh {
     uint8_t culled_faces;
     uint16_t padding;
 
-    static enum class Face : uint8_t
+    enum class Face : uint8_t
     {
       Top = 0,
       Front = 1,
@@ -70,12 +69,12 @@ namespace heh {
     std::string side;
     std::string top;
     std::string bottom;
-    bool is_transparent;
+    bool is_transparent{false};
   };
 
   struct TextureFormat {
     std::string name;
-    std::array<glm::vec2, 4> uvs;
+    glm::vec2 uvs[4]{};
   };
 
   namespace block_map {

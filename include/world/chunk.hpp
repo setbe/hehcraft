@@ -10,9 +10,6 @@
 // std
 #include <cstdint>
 #include <vector>
-#include <memory>
-#include <fstream>
-#include <sstream>
 
 
 
@@ -31,7 +28,7 @@ namespace heh {
   struct ChunkRenderData
   {
     std::vector<Vertex> vertices;
-    std::vector<int32_t> elements;
+    std::vector<uint32_t> elements;
 
     uint32_t vertex_size_bytes;
     uint32_t element_size_bytes;
@@ -45,11 +42,9 @@ namespace heh {
     std::vector<Block> blocks_data;
     glm::ivec2 chunk_position;
 
-    void Generate(int32_t seed, int chunk_x, int chunk_z);
-    void BuildMesh();
-    void UploadToGpu();
-    void ClearCpuData();
-    void Render();
+    void Generate(int32_t seed, int chunk_x, int chunk_z) noexcept;
+    void BuildMesh() noexcept;
+    void Render() noexcept;
 
     void Serialize(const std::string& world_filename);
     void Deserialize(const std::string& world_filename, uint32_t x, uint32_t y);
@@ -58,6 +53,9 @@ namespace heh {
     Buffer vbo_{ GL_ARRAY_BUFFER };
     Buffer ebo_{ GL_ELEMENT_ARRAY_BUFFER };
     VertexArray vao_{};
+
+    void UploadToGpu() noexcept;
+    void ClearCpuData() noexcept;
   };
 
 }  // namespace heh

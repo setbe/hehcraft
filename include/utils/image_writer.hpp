@@ -38,11 +38,11 @@ namespace heh {
 
     void CreateAtlas(const std::string& tex_path, const std::string& output_file);
 
-    void BindAtlas() const {
+    void BindAtlas() const noexcept {
       glBindTexture(GL_TEXTURE_2D, atlas_texture_id_);
     }
 
-    uint16_t GetAtlasSize() const {
+    uint16_t GetAtlasSize() const noexcept {
       return out_size_;
     }
 
@@ -50,7 +50,7 @@ namespace heh {
     GLuint atlas_texture_id_;
     uint16_t out_size_;
 
-    void GenerateGLTexture(const std::vector<Pixel>& pixels_list);
+    void GenerateGLTexture(const std::vector<Pixel>& pixels_list) noexcept;
   };
 
 } // namespace heh
